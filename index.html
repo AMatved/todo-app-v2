@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>TO-DO List</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+
+<!-- ОКНО АВТОРИЗАЦИИ (показывается сначала) -->
+    <div id="auth-container">
+        <div class="auth-box">
+            <h2>Welcome to To-Do List</h2>
+            
+            <!-- Форма входа -->
+            <div id="login-form" class="auth-form active">
+                <h3>Sign In</h3>
+                <input type="text" id="login-username" placeholder="Username" class="auth-input">
+                <input type="password" id="login-password" placeholder="Password" class="auth-input">
+                <button id="login-btn" class="auth-btn">Sign In</button>
+                <p class="auth-switch">Don't have an account? <a href="#" id="go-to-signup">Sign Up</a></p>
+            </div>
+            
+            <!-- Форма регистрации -->
+            <div id="signup-form" class="auth-form">
+                <h3>Sign Up</h3>
+                <input type="text" id="signup-username" placeholder="Choose Username" class="auth-input">
+                <input type="password" id="signup-password" placeholder="Choose Password" class="auth-input">
+                <input type="password" id="signup-confirm" placeholder="Confirm Password" class="auth-input">
+                <button id="signup-btn" class="auth-btn">Create Account</button>
+                <p class="auth-switch">Already have an account? <a href="#" id="go-to-login">Sign In</a></p>
+            </div>
+            
+            <!-- Гость (пропустить) -->
+            <div class="guest-option">
+                <p>Or continue as <a href="#" id="guest-login">Guest</a></p>
+            </div>
+        </div>
+    </div>
+ <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ (скрыто до входа) -->
+    <div id="app-container" style="display: none;">
+        <!-- Верхняя панель с приветствием и выходом -->
+        <div id="user-header">
+            <div id="user-info">
+                <span>Welcome, <span id="current-user">Guest</span>!</span>
+            </div>
+            <button id="logout-btn" class="logout-btn">Logout</button>
+        </div>
+
+    <!-- create a container for the todo list -->
+    <div id="todo-container">
+      <!-- todo list header -->
+      <div id="header">
+        <h1>To Do List</h1>
+      </div>
+
+      <!-- create input box -->
+      <div id="todo-form">
+        <input
+          type="text"
+          class="input-item"
+          name="input_box"
+          id="input-box"
+          placeholder="Add Task"
+        />
+
+        <!-- add button -->
+        <button id="input-button" onclick="addTask()">Add Task</button>
+      </div>
+
+      <!-- task list -->
+      <h2>Task List</h2>
+      <ul id="list-container">
+         <!-- Здесь будут появляться задачи -->
+      </ul>
+    </div>
+    <hr />
+<!-- task list counter -->
+<div class="counter-container">
+  <div id="task-counters">
+    Completed: <span id="completed-counter">0</span> | Uncompleted:
+    <span id="uncompleted-counter">0</span>
+  </div>
+</div>
+<!-- Подключаем JavaScript В КОНЦЕ -->
+    <script type="text/javascript" src="client.js"></script>
+  </body>
+</html>

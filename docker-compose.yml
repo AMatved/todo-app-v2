@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: todo-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "3443:3443"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HTTPS_PORT=3443
+    volumes:
+      - ./data:/app/data
+      - ./certs:/app/certs
+    networks:
+      - todo-network
+
+networks:
+  todo-network:
+    driver: bridge

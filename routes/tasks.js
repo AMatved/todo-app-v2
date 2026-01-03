@@ -1,0 +1,129 @@
+const express = require('express');
+const { authenticateToken } = require('../middleware/auth');
+const {
+  getUserTasks,
+  createTask,
+  updateTask,
+  deleteTask
+} = require('../database');
+
+const router = express.Router();
+
+// ==================== ROUTES ====================
+
+/**
+ * GET /api/tasks
+ * Получить все задачи текущего пользователя
+ */
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await getUserTasks(req.user.id);
+
+    // Преобразуем completed из integer в boolean для JSON
+    const formattedTasks = tasks.map(task => ({
+      ...task,
+      completed: task.completed === 1
+    }));
+
+    res.json({ tasks: formattedTasks });
+  } catch (error) {
+    console.error('Get tasks error:', error);
+    res.status(500).json({ error: 'Failed to fetch tasks' });
+  }
+});
+
+/**
+ * POST /api/tasks
+ * Создать новую задачу
+ */
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ error: 'Task text is required' });
+    }
+
+    if (text.length > 500) {
+      return res.status(400).json({ error: 'Task text must be less than 500 characters' });
+    }
+
+    const task = await createTask(req.user.id, text.trim());
+
+    res.status(201).json({
+      message: 'Task created successfully',
+      task: {
+        ...task,
+        completed: task.completed === 1
+      }
+    });
+  } catch (error) {
+    console.error('Create task error:', error);
+    res.status(500).json({ error: 'Failed to create task' });
+  }
+});
+
+/**
+ * PUT /api/tasks/:id
+ * Обновить задачу
+ */
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id);
+    const { text, completed } = req.body;
+
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+
+    if (text !== undefined && text.trim().length === 0) {
+      return res.status(400).json({ error: 'Task text cannot be empty' });
+    }
+
+    if (text !== undefined && text.length > 500) {
+      return res.status(400).json({ error: 'Task text must be less than 500 characters' });
+    }
+
+    const updates = {};
+    if (text !== undefined) updates.text = text.trim();
+    if (completed !== undefined) updates.completed = completed;
+
+    const updated = await updateTask(taskId, req.user.id, updates);
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    res.json({ message: 'Task updated successfully' });
+  } catch (error) {
+    console.error('Update task error:', error);
+    res.status(500).json({ error: 'Failed to update task' });
+  }
+});
+
+/**
+ * DELETE /api/tasks/:id
+ * Удалить задачу
+ */
+router.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id);
+
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+
+    const deleted = await deleteTask(taskId, req.user.id);
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    res.json({ message: 'Task deleted successfully' });
+  } catch (error) {
+    console.error('Delete task error:', error);
+    res.status(500).json({ error: 'Failed to delete task' });
+  }
+});
+
+module.exports = router;
