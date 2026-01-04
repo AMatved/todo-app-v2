@@ -34,6 +34,7 @@ const translations = {
     sortByDate: 'По дате',
     sortAsc: 'По возрастанию',
     sortDesc: 'По убыванию',
+    deleteCompleted: 'Очистить выполненные',
     // Auth
     username: 'Имя пользователя',
     password: 'Пароль',
@@ -101,6 +102,7 @@ const translations = {
     sortByDate: 'By date',
     sortAsc: 'Ascending',
     sortDesc: 'Descending',
+    deleteCompleted: 'Clear completed',
     // Auth
     username: 'Username',
     password: 'Password',
@@ -141,7 +143,7 @@ const translations = {
 };
 
 // Язык по умолчанию
-let currentLang = localStorage.getItem('app-language') || 'ru';
+let currentLang = localStorage.getItem('app-language') || 'en';
 
 // Функция для получения перевода
 function t(key) {
@@ -160,7 +162,7 @@ function updateUILanguage() {
   // Update language icon
   const langIcon = document.getElementById('lang-icon');
   if (langIcon) {
-    langIcon.textContent = currentLang === 'ru' ? '🇬🇧' : '🇷🇺';
+    langIcon.textContent = currentLang === 'en' ? '🇷🇺' : '🇬🇧';
   }
 
   // Update nav
@@ -208,6 +210,26 @@ function updateUILanguage() {
       el.textContent = formatTimestamp(timestamp);
     }
   });
+
+  // Update filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    const filterType = btn.dataset.filter;
+    if (filterType === 'all') btn.textContent = t('filterAll');
+    if (filterType === 'active') btn.textContent = t('filterActive');
+    if (filterType === 'completed') btn.textContent = t('filterCompleted');
+  });
+
+  // Update sort button
+  const sortBtn = document.querySelector('.sort-text');
+  if (sortBtn) {
+    sortBtn.textContent = t('sortByDate');
+  }
+
+  // Update delete completed button
+  const deleteCompletedText = document.querySelector('.delete-completed-text');
+  if (deleteCompletedText) {
+    deleteCompletedText.textContent = t('deleteCompleted');
+  }
 
   // Update guest username if logged in as guest
   if (currentUser && (currentUser.username === 'Гость' || currentUser.username === 'Guest')) {
