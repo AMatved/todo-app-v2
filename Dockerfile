@@ -3,11 +3,11 @@ FROM node:20-alpine
 # Рабочая директория
 WORKDIR /app
 
-# Копируем package files
+# Сначала копируем package.json
 COPY package*.json ./
 
-# Устанавливаем зависимости
-RUN npm install --omit=dev
+# Устанавливаем зависимости без postinstall скриптов
+RUN npm install --omit=dev --ignore-scripts
 
 # Копируем остальное
 COPY . .
