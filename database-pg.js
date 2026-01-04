@@ -138,3 +138,10 @@ module.exports = {
   updateTask,
   deleteTask
 };
+
+// Auto-initialize database on module load (only in production)
+if (process.env.DATABASE_URL) {
+  initializeDatabase().catch(err => {
+    console.error('Failed to initialize PostgreSQL database:', err);
+  });
+}

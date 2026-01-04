@@ -55,14 +55,9 @@ app.use(express.static(path.join(__dirname)));
 
 // ==================== ROUTES ====================
 
-// Initialize database
-if (process.env.DATABASE_URL) {
-  // PostgreSQL async initialization
-  db.initializeDatabase().catch(err => {
-    console.error('Failed to initialize PostgreSQL database:', err);
-  });
-}
-// SQLite initializes automatically on require
+// Database initializes automatically on first require in routes
+// PostgreSQL: async init in database-pg.js
+// SQLite: sync init in database-sqlite.js
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tasks', generalLimiter, taskRoutes);
