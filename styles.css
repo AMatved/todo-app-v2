@@ -406,6 +406,12 @@ body {
   flex-wrap: wrap;
 }
 
+.control-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .filter-btn {
   padding: 8px 16px;
   background: var(--bg-primary);
@@ -448,6 +454,34 @@ body {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   transform: scale(1.02);
+}
+
+.delete-completed-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-primary);
+  border: 2px solid #ef4444;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-completed-btn:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.02);
+}
+
+.delete-completed-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-primary);
+  color: var(--text-light);
 }
 
 .sort-icon {

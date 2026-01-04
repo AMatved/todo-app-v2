@@ -59,6 +59,9 @@ const translations = {
     errorTaskUpdate: 'Не удалось обновить задачу',
     errorTaskDelete: 'Не удалось удалить задачу',
     confirmDelete: 'Удалить эту задачу?',
+    confirmDeleteAll: 'Удалить все выполненные задачи?',
+    noCompletedTasks: 'Нет выполненных задач',
+    deletedCompleted: 'Удалено выполненных задач:',
     loginError: 'Ошибка входа',
     registerError: 'Ошибка регистрации',
     // Placeholders
@@ -123,6 +126,9 @@ const translations = {
     errorTaskUpdate: 'Failed to update task',
     errorTaskDelete: 'Failed to delete task',
     confirmDelete: 'Delete this task?',
+    confirmDeleteAll: 'Delete all completed tasks?',
+    noCompletedTasks: 'No completed tasks',
+    deletedCompleted: 'Deleted completed tasks:',
     loginError: 'Login error',
     registerError: 'Registration error',
     // Placeholders
@@ -626,6 +632,47 @@ async function deleteTaskFromServer(taskId) {
   }
 }
 
+async function deleteAllCompletedTasks() {
+  if (isGuest) {
+    // Для гостей удаляем выполненные задачи напрямую
+    const tasks = listContainer.querySelectorAll('.task-item');
+    tasks.forEach(task => {
+      const checkbox = task.querySelector('input[type="checkbox"]');
+      if (checkbox && checkbox.checked) {
+        task.remove();
+      }
+    });
+    updateCounters();
+    checkEmptyState();
+    return;
+  }
+
+  // Проверяем, есть ли выполненные задачи
+  const hasCompletedTasks = allTasks.some(task => task.completed);
+  if (!hasCompletedTasks) {
+    showNotification(t('noCompletedTasks'), 'error');
+    return;
+  }
+
+  if (!confirm(t('confirmDeleteAll'))) {
+    return;
+  }
+
+  try {
+    const data = await apiRequest('/tasks/completed', {
+      method: 'DELETE'
+    });
+
+    // Удаляем выполненные задачи из allTasks
+    allTasks = allTasks.filter(task => !task.completed);
+    applyFiltersAndSort();
+
+    showNotification(`${t('deletedCompleted')} ${data.deletedCount}`);
+  } catch (error) {
+    showNotification(t('errorTaskDelete'), 'error');
+  }
+}
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -639,6 +686,12 @@ function updateCounters() {
 
   completedCounter.textContent = completedTasks;
   uncompletedCounter.textContent = uncompletedTasks;
+
+  // Обновляем состояние кнопки удаления выполненных задач
+  const deleteCompletedBtn = document.getElementById('delete-completed-btn');
+  if (deleteCompletedBtn) {
+    deleteCompletedBtn.disabled = completedTasks === 0;
+  }
 
   checkEmptyState();
 }
@@ -872,6 +925,12 @@ document.addEventListener("DOMContentLoaded", async function() {
   const sortBtn = document.getElementById('sort-btn');
   if (sortBtn) {
     sortBtn.addEventListener('click', toggleSortDirection);
+  }
+
+  // Добавляем listener для удаления всех выполненных задач
+  const deleteCompletedBtn = document.getElementById('delete-completed-btn');
+  if (deleteCompletedBtn) {
+    deleteCompletedBtn.addEventListener('click', deleteAllCompletedTasks);
   }
 
   const savedToken = localStorage.getItem('auth-token');

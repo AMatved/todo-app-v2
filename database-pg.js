@@ -132,6 +132,14 @@ const deleteTask = async (taskId, userId) => {
   return result.rowCount > 0;
 };
 
+const deleteAllCompletedTasks = async (userId) => {
+  const result = await pool.query(
+    'DELETE FROM tasks WHERE user_id = $1 AND completed = true',
+    [userId]
+  );
+  return result.rowCount;
+};
+
 module.exports = {
   pool,
   initializeDatabase,
@@ -142,7 +150,8 @@ module.exports = {
   getUserTasks,
   createTask,
   updateTask,
-  deleteTask
+  deleteTask,
+  deleteAllCompletedTasks
 };
 
 // Auto-initialize database on module load (only in production)

@@ -198,6 +198,20 @@ const deleteTask = (taskId, userId) => {
   });
 };
 
+// Удалить все выполненные задачи пользователя
+const deleteAllCompletedTasks = (userId) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'DELETE FROM tasks WHERE user_id = ? AND completed = 1',
+      [userId],
+      function(err) {
+        if (err) reject(err);
+        else resolve(this.changes);
+      }
+    );
+  });
+};
+
 module.exports = {
   db,
   findUserByUsername,
@@ -207,5 +221,6 @@ module.exports = {
   getUserTasks,
   createTask,
   updateTask,
-  deleteTask
+  deleteTask,
+  deleteAllCompletedTasks
 };
