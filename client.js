@@ -595,7 +595,7 @@ function addLocalTask(text) {
 async function updateTaskOnServer(taskId, updates) {
   if (isGuest) return;
 
-  console.log('Client: Updating task', taskId, 'with updates:', updates);
+  console.log('Client: Updating task', taskId, 'with updates:', JSON.stringify(updates));
 
   try {
     await apiRequest(`/tasks/${taskId}`, {
@@ -603,16 +603,10 @@ async function updateTaskOnServer(taskId, updates) {
       body: JSON.stringify(updates)
     });
 
-    // Обновляем задачу в allTasks
-    const taskIndex = allTasks.findIndex(t => t.id === taskId);
-    if (taskIndex !== -1) {
-      console.log('Client: Task before update in allTasks:', allTasks[taskIndex]);
-      allTasks[taskIndex] = { ...allTasks[taskIndex], ...updates };
-      console.log('Client: Task after update in allTasks:', allTasks[taskIndex]);
-      applyFiltersAndSort();
-    }
+    console.log('Client: Update successful for task', taskId);
   } catch (error) {
-    showNotification(t('errorTaskUpdate'), 'error');
+    console.error('Client: Update failed:', error);
+    throw error; // Перебрасываем ошибку, чтобы откатить UI
   }
 }
 
@@ -661,12 +655,35 @@ function attachTaskListeners(taskElement) {
 
   checkbox.addEventListener("change", async function() {
     const taskId = parseInt(taskElement.dataset.taskId);
+    const newCompletedState = checkbox.checked;
+
+    // Сразу обновляем UI (оптимистичное обновление)
+    taskElement.classList.toggle("completed", newCompletedState);
+
     if (taskId && !isGuest) {
       const taskContent = taskElement.querySelector('.task-content').textContent;
-      await updateTaskOnServer(taskId, { text: taskContent, completed: checkbox.checked });
+
+      // Обновляем в allTasks сразу
+      const taskIndex = allTasks.findIndex(t => t.id === taskId);
+      if (taskIndex !== -1) {
+        allTasks[taskIndex].completed = newCompletedState;
+        updateCounters();
+      }
+
+      // Отправляем на сервер в фоне
+      try {
+        await updateTaskOnServer(taskId, { text: taskContent, completed: newCompletedState });
+      } catch (error) {
+        // При ошибке откатываем UI
+        taskElement.classList.toggle("completed", !newCompletedState);
+        checkbox.checked = !newCompletedState;
+        if (taskIndex !== -1) {
+          allTasks[taskIndex].completed = !newCompletedState;
+          updateCounters();
+        }
+      }
     } else {
       // Для гостей обновляем напрямую
-      taskElement.classList.toggle("completed", checkbox.checked);
       updateCounters();
     }
   });
