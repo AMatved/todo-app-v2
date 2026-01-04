@@ -19,11 +19,15 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const tasks = await getUserTasks(req.user.id);
 
+    console.log('GET /api/tasks - Raw tasks from DB:', tasks);
+
     // Преобразуем completed из integer в boolean для JSON
     const formattedTasks = tasks.map(task => ({
       ...task,
       completed: task.completed === 1
     }));
+
+    console.log('GET /api/tasks - Formatted tasks:', formattedTasks);
 
     res.json({ tasks: formattedTasks });
   } catch (error) {
@@ -82,6 +86,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const taskId = parseInt(req.params.id);
     const { text, completed } = req.body;
 
+    console.log('PUT /api/tasks/:id - Task ID:', taskId);
+    console.log('PUT /api/tasks/:id - Request body:', req.body);
+
     if (isNaN(taskId)) {
       return res.status(400).json({ error: 'Invalid task ID' });
     }
@@ -98,7 +105,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
     if (text !== undefined) updates.text = text.trim();
     if (completed !== undefined) updates.completed = completed;
 
+    console.log('PUT /api/tasks/:id - Updates to apply:', updates);
+
     const updated = await updateTask(taskId, req.user.id, updates);
+
+    console.log('PUT /api/tasks/:id - Updated successfully:', updated);
 
     if (!updated) {
       return res.status(404).json({ error: 'Task not found' });
