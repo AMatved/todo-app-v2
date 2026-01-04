@@ -21,10 +21,10 @@ router.get('/', authenticateToken, async (req, res) => {
 
     console.log('GET /api/tasks - Raw tasks from DB:', tasks);
 
-    // Преобразуем completed из integer в boolean для JSON
+    // PostgreSQL возвращает boolean, SQLite - integer (0/1)
     const formattedTasks = tasks.map(task => ({
       ...task,
-      completed: task.completed === 1
+      completed: task.completed === true || task.completed === 1
     }));
 
     console.log('GET /api/tasks - Formatted tasks:', formattedTasks);
@@ -65,7 +65,7 @@ router.post('/', authenticateToken, async (req, res) => {
       message: 'Task created successfully',
       task: {
         ...task,
-        completed: task.completed === 1 || task.completed === true
+        completed: task.completed === true || task.completed === 1
       }
     };
     console.log('POST /api/tasks - Sending response:', response);
