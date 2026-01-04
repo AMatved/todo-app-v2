@@ -58,9 +58,19 @@ const generalLimiter = rateLimit({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname)));
 
 // ==================== ROUTES ====================
+
+// Initialize database
+if (process.env.DATABASE_URL) {
+  // PostgreSQL async initialization
+  db.initializeDatabase().catch(err => {
+    console.error('Failed to initialize PostgreSQL database:', err);
+  });
+}
+// SQLite initializes automatically on require
+
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tasks', generalLimiter, taskRoutes);
 
@@ -81,20 +91,22 @@ app.use((err, req, res, next) => {
 });
 
 // ==================== HTTPS SERVER ====================
-// Попытка запустить HTTPS сервер
-try {
-  const httpsOptions = {
-    key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem'))
-  };
+// Попытка запустить HTTPS сервер (только локально)
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    const httpsOptions = {
+      key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
+      cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem'))
+    };
 
-  https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
-    console.log(`\n🔒 HTTPS Server running on https://localhost:${HTTPS_PORT}`);
-    console.log(`📝 Certificate: self-signed (browser warning expected)\n`);
-  });
-} catch (err) {
-  console.log('\n⚠️  HTTPS certificates not found. Running HTTP only.');
-  console.log('Run: npm run generate-cert\n');
+    https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
+      console.log(`\n🔒 HTTPS Server running on https://localhost:${HTTPS_PORT}`);
+      console.log(`📝 Certificate: self-signed (browser warning expected)\n`);
+    });
+  } catch (err) {
+    console.log('\n⚠️  HTTPS certificates not found. Running HTTP only.');
+    console.log('Run: npm run generate-cert\n');
+  }
 }
 
 // ==================== HTTP SERVER ====================
