@@ -30,9 +30,36 @@ app.use(helmet({
   }
 }));
 
-// CORS - разрешаем запросы только с нашего домена
+// CORS - разрешаем запросы с любого домена в production, localhost в разработке
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:3000',
+  'https://localhost:3443'
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // In production, allow the Railway domain
+    if (process.env.NODE_ENV === 'production') {
+      const deployedUrl = process.env.RAILWAY_PUBLIC_DOMAIN;
+      if (deployedUrl && origin.includes(deployedUrl)) {
+        return callback(null, true);
+      }
+      // Also allow the Railway public URL
+      if (origin.includes('railway.app') || origin.includes('up.railway.app')) {
+        return callback(null, true);
+      }
+    }
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -77,6 +104,10 @@ app.get('*', (req, res) => {
 
 // ==================== ERROR HANDLING ====================
 app.use((err, req, res, next) => {
+  if (err.message === 'CORS not allowed') {
+    console.error('CORS Error: Origin not allowed:', req.headers.origin);
+    return res.status(403).json({ error: 'CORS not allowed' });
+  }
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });

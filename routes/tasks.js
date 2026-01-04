@@ -38,25 +38,35 @@ router.get('/', authenticateToken, async (req, res) => {
  */
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    console.log('POST /api/tasks - User ID:', req.user.id);
+    console.log('POST /api/tasks - Request body:', req.body);
+
     const { text } = req.body;
 
     if (!text || text.trim().length === 0) {
+      console.log('POST /api/tasks - Validation failed: empty text');
       return res.status(400).json({ error: 'Task text is required' });
     }
 
     if (text.length > 500) {
+      console.log('POST /api/tasks - Validation failed: text too long');
       return res.status(400).json({ error: 'Task text must be less than 500 characters' });
     }
 
+    console.log('POST /api/tasks - Creating task...');
     const task = await createTask(req.user.id, text.trim());
+    console.log('POST /api/tasks - Task created:', task);
 
-    res.status(201).json({
+    const response = {
       message: 'Task created successfully',
       task: {
         ...task,
-        completed: task.completed === 1
+        completed: task.completed === 1 || task.completed === true
       }
-    });
+    };
+    console.log('POST /api/tasks - Sending response:', response);
+
+    res.status(201).json(response);
   } catch (error) {
     console.error('Create task error:', error);
     res.status(500).json({ error: 'Failed to create task' });
