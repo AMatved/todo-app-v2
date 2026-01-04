@@ -8,13 +8,6 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 
-// Use PostgreSQL in production, SQLite locally
-let db;
-if (process.env.DATABASE_URL) {
-  db = require('./database-pg');
-} else {
-  db = require('./database');
-}
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
 
