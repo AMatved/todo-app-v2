@@ -50,6 +50,8 @@ async function apiRequest(endpoint, options = {}) {
     defaultOptions.headers.Authorization = `Bearer ${authToken}`;
   }
 
+  console.log('API Request:', url, options.method || 'GET');
+
   try {
     const response = await fetch(url, { ...defaultOptions, ...options });
 
@@ -60,6 +62,8 @@ async function apiRequest(endpoint, options = {}) {
     } else {
       data = await response.text();
     }
+
+    console.log('API Response:', response.status, data);
 
     if (!response.ok) {
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
@@ -249,13 +253,36 @@ async function saveTask(text) {
     addLocalTask(text);
   } else {
     try {
-      await apiRequest('/tasks', {
+      const data = await apiRequest('/tasks', {
         method: 'POST',
         body: JSON.stringify({ text })
       });
-      await loadTasks();
+
+      // Добавляем новую задачу в UI напрямую (быстрее)
+      if (data && data.task) {
+        const taskData = data.task;
+        const li = document.createElement("div");
+        li.className = "task-item";
+        li.dataset.taskId = taskData.id;
+        li.innerHTML = `
+          <label class="task-checkbox">
+            <input type="checkbox">
+            <span class="checkmark"></span>
+          </label>
+          <span class="task-content">${escapeHtml(taskData.text)}</span>
+          <div class="task-actions">
+            <button class="action-btn edit">Изменить</button>
+            <button class="action-btn delete">Удалить</button>
+          </div>
+        `;
+        listContainer.appendChild(li);
+        attachTaskListeners(li);
+        updateCounters();
+        showNotification('Задача создана!');
+      }
     } catch (error) {
-      showNotification('Не удалось создать задачу', 'error');
+      console.error('Error creating task:', error);
+      showNotification(error.message || 'Не удалось создать задачу', 'error');
     }
   }
 }
@@ -366,8 +393,19 @@ async function addTask() {
     return;
   }
 
+  console.log('Adding task:', task);
+  console.log('Is guest:', isGuest);
+  console.log('Has auth token:', !!authToken);
+
   inputBox.value = "";
-  await saveTask(task);
+
+  try {
+    await saveTask(task);
+    console.log('Task saved successfully');
+  } catch (error) {
+    console.error('Failed to save task:', error);
+    showNotification('Ошибка при создании задачи', 'error');
+  }
 }
 
 // ==================== МОДАЛЬНОЕ ОКНО ====================
