@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
+const trashRoutes = require('./routes/trash');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,6 +95,7 @@ app.use(express.static(path.join(__dirname)));
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tasks', generalLimiter, taskRoutes);
+app.use('/api/trash', generalLimiter, trashRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

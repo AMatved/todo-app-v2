@@ -47,6 +47,32 @@ async function initializeDatabase() {
     `);
     console.log('✅ Index created');
 
+    // Create deleted_tasks table (trash)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS deleted_tasks (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        original_task_id INTEGER NOT NULL,
+        text TEXT NOT NULL,
+        completed BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL,
+        deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '15 days')
+      )
+    `);
+    console.log('✅ Deleted tasks table ready');
+
+    // Create index for deleted_tasks
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_deleted_tasks_user_id
+      ON deleted_tasks(user_id)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_deleted_tasks_expires_at
+      ON deleted_tasks(expires_at)
+    `);
+    console.log('✅ Deleted tasks indexes created');
+
   } catch (err) {
     console.error('Error initializing database:', err);
     throw err;
@@ -125,6 +151,26 @@ const updateTask = async (taskId, userId, updates) => {
 };
 
 const deleteTask = async (taskId, userId) => {
+  // First, get the task details to save in deleted_tasks
+  const taskResult = await pool.query(
+    'SELECT * FROM tasks WHERE id = $1 AND user_id = $2',
+    [taskId, userId]
+  );
+
+  if (taskResult.rows.length === 0) {
+    return false;
+  }
+
+  const task = taskResult.rows[0];
+
+  // Save to deleted_tasks before actual deletion
+  await pool.query(
+    `INSERT INTO deleted_tasks (user_id, original_task_id, text, completed, created_at)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [userId, taskId, task.text, task.completed, task.created_at]
+  );
+
+  // Now delete the task
   const result = await pool.query(
     'DELETE FROM tasks WHERE id = $1 AND user_id = $2',
     [taskId, userId]
@@ -133,8 +179,95 @@ const deleteTask = async (taskId, userId) => {
 };
 
 const deleteAllCompletedTasks = async (userId) => {
+  // First, get all completed tasks
+  const tasksResult = await pool.query(
+    'SELECT * FROM tasks WHERE user_id = $1 AND completed = true',
+    [userId]
+  );
+
+  // Save all to deleted_tasks
+  for (const task of tasksResult.rows) {
+    await pool.query(
+      `INSERT INTO deleted_tasks (user_id, original_task_id, text, completed, created_at)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, task.id, task.text, task.completed, task.created_at]
+    );
+  }
+
+  // Now delete all completed tasks
   const result = await pool.query(
     'DELETE FROM tasks WHERE user_id = $1 AND completed = true',
+    [userId]
+  );
+  return result.rowCount;
+};
+
+// ==================== TRASH METHODS ====================
+
+const getDeletedTasks = async (userId) => {
+  const result = await pool.query(
+    `SELECT id, original_task_id, text, completed, created_at, deleted_at, expires_at
+     FROM deleted_tasks
+     WHERE user_id = $1 AND expires_at > CURRENT_TIMESTAMP
+     ORDER BY deleted_at DESC`,
+    [userId]
+  );
+  return result.rows;
+};
+
+const restoreTask = async (deletedTaskId, userId) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Get the deleted task
+    const deletedResult = await client.query(
+      'SELECT * FROM deleted_tasks WHERE id = $1 AND user_id = $2',
+      [deletedTaskId, userId]
+    );
+
+    if (deletedResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+
+    const deletedTask = deletedResult.rows[0];
+
+    // Restore to tasks table
+    const restoreResult = await client.query(
+      `INSERT INTO tasks (user_id, text, completed, created_at)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [userId, deletedTask.text, deletedTask.completed, deletedTask.created_at]
+    );
+
+    // Delete from deleted_tasks
+    await client.query(
+      'DELETE FROM deleted_tasks WHERE id = $1',
+      [deletedTaskId]
+    );
+
+    await client.query('COMMIT');
+    return restoreResult.rows[0].id;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
+const permanentDeleteTask = async (deletedTaskId, userId) => {
+  const result = await pool.query(
+    'DELETE FROM deleted_tasks WHERE id = $1 AND user_id = $2',
+    [deletedTaskId, userId]
+  );
+  return result.rowCount > 0;
+};
+
+const emptyTrash = async (userId) => {
+  const result = await pool.query(
+    'DELETE FROM deleted_tasks WHERE user_id = $1',
     [userId]
   );
   return result.rowCount;
@@ -151,7 +284,11 @@ module.exports = {
   createTask,
   updateTask,
   deleteTask,
-  deleteAllCompletedTasks
+  deleteAllCompletedTasks,
+  getDeletedTasks,
+  restoreTask,
+  permanentDeleteTask,
+  emptyTrash
 };
 
 // Auto-initialize database on module load (only in production)

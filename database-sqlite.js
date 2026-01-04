@@ -68,6 +68,46 @@ function initializeDatabase() {
       console.error('Error creating index:', err.message);
     }
   });
+
+  // Таблица удаленных задач (корзина)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS deleted_tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      original_task_id INTEGER NOT NULL,
+      text TEXT NOT NULL,
+      completed INTEGER DEFAULT 0,
+      created_at DATETIME NOT NULL,
+      deleted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      expires_at DATETIME DEFAULT (datetime('now', '+15 days')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Error creating deleted_tasks table:', err.message);
+    } else {
+      console.log('✅ Deleted tasks table ready');
+    }
+  });
+
+  // Индексы для deleted_tasks
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_deleted_tasks_user_id
+    ON deleted_tasks(user_id)
+  `, (err) => {
+    if (err) {
+      console.error('Error creating deleted_tasks index:', err.message);
+    }
+  });
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_deleted_tasks_expires_at
+    ON deleted_tasks(expires_at)
+  `, (err) => {
+    if (err) {
+      console.error('Error creating deleted_tasks expires index:', err.message);
+    }
+  });
 }
 
 // ==================== USER METHODS ====================
@@ -187,12 +227,42 @@ const updateTask = (taskId, userId, updates) => {
 // Удалить задачу
 const deleteTask = (taskId, userId) => {
   return new Promise((resolve, reject) => {
-    db.run(
-      'DELETE FROM tasks WHERE id = ? AND user_id = ?',
+    // Сначала получаем задачу
+    db.get(
+      'SELECT * FROM tasks WHERE id = ? AND user_id = ?',
       [taskId, userId],
-      function(err) {
-        if (err) reject(err);
-        else resolve(this.changes > 0);
+      (err, task) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        if (!task) {
+          resolve(false);
+          return;
+        }
+
+        // Сохраняем в deleted_tasks
+        db.run(
+          `INSERT INTO deleted_tasks (user_id, original_task_id, text, completed, created_at)
+           VALUES (?, ?, ?, ?, ?)`,
+          [userId, taskId, task.text, task.completed, task.created_at],
+          (saveErr) => {
+            if (saveErr) {
+              reject(saveErr);
+              return;
+            }
+
+            // Теперь удаляем задачу
+            db.run(
+              'DELETE FROM tasks WHERE id = ? AND user_id = ?',
+              [taskId, userId],
+              function(deleteErr) {
+                if (deleteErr) reject(deleteErr);
+                else resolve(this.changes > 0);
+              }
+            );
+          }
+        );
       }
     );
   });
@@ -201,8 +271,129 @@ const deleteTask = (taskId, userId) => {
 // Удалить все выполненные задачи пользователя
 const deleteAllCompletedTasks = (userId) => {
   return new Promise((resolve, reject) => {
+    // Сначала получаем все выполненные задачи
+    db.all(
+      'SELECT * FROM tasks WHERE user_id = ? AND completed = 1',
+      [userId],
+      (err, tasks) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        // Сохраняем все в deleted_tasks
+        const savePromises = tasks.map(task => {
+          return new Promise((saveResolve, saveReject) => {
+            db.run(
+              `INSERT INTO deleted_tasks (user_id, original_task_id, text, completed, created_at)
+               VALUES (?, ?, ?, ?, ?)`,
+              [userId, task.id, task.text, task.completed, task.created_at],
+              (saveErr) => {
+                if (saveErr) saveReject(saveErr);
+                else saveResolve();
+              }
+            );
+          });
+        });
+
+        Promise.all(savePromises).then(() => {
+          // Теперь удаляем все выполненные задачи
+          db.run(
+            'DELETE FROM tasks WHERE user_id = ? AND completed = 1',
+            [userId],
+            function(deleteErr) {
+              if (deleteErr) reject(deleteErr);
+              else resolve(this.changes);
+            }
+          );
+        }).catch(reject);
+      }
+    );
+  });
+};
+
+// ==================== TRASH METHODS ====================
+
+// Получить все удаленные задачи пользователя
+const getDeletedTasks = (userId) => {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT id, original_task_id, text, completed, created_at, deleted_at, expires_at
+       FROM deleted_tasks
+       WHERE user_id = ? AND expires_at > datetime('now')
+       ORDER BY deleted_at DESC`,
+      [userId],
+      (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
+};
+
+// Восстановить задачу из корзины
+const restoreTask = (deletedTaskId, userId) => {
+  return new Promise((resolve, reject) => {
+    // Получаем удаленную задачу
+    db.get(
+      'SELECT * FROM deleted_tasks WHERE id = ? AND user_id = ?',
+      [deletedTaskId, userId],
+      (err, deletedTask) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        if (!deletedTask) {
+          resolve(false);
+          return;
+        }
+
+        // Восстанавливаем в tasks
+        db.run(
+          `INSERT INTO tasks (user_id, text, completed, created_at)
+           VALUES (?, ?, ?, ?)`,
+          [userId, deletedTask.text, deletedTask.completed, deletedTask.created_at],
+          function(insertErr) {
+            if (insertErr) {
+              reject(insertErr);
+              return;
+            }
+
+            // Удаляем из deleted_tasks
+            db.run(
+              'DELETE FROM deleted_tasks WHERE id = ?',
+              [deletedTaskId],
+              (deleteErr) => {
+                if (deleteErr) reject(deleteErr);
+                else resolve(this.lastID);
+              }
+            );
+          }
+        );
+      }
+    );
+  });
+};
+
+// Окончательно удалить задачу из корзины
+const permanentDeleteTask = (deletedTaskId, userId) => {
+  return new Promise((resolve, reject) => {
     db.run(
-      'DELETE FROM tasks WHERE user_id = ? AND completed = 1',
+      'DELETE FROM deleted_tasks WHERE id = ? AND user_id = ?',
+      [deletedTaskId, userId],
+      function(err) {
+        if (err) reject(err);
+        else resolve(this.changes > 0);
+      }
+    );
+  });
+};
+
+// Очистить всю корзину
+const emptyTrash = (userId) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'DELETE FROM deleted_tasks WHERE user_id = ?',
       [userId],
       function(err) {
         if (err) reject(err);
@@ -222,5 +413,9 @@ module.exports = {
   createTask,
   updateTask,
   deleteTask,
-  deleteAllCompletedTasks
+  deleteAllCompletedTasks,
+  getDeletedTasks,
+  restoreTask,
+  permanentDeleteTask,
+  emptyTrash
 };
