@@ -2,6 +2,180 @@
 // Используем относительный путь - работает и локально, и на Railway
 const API_BASE_URL = '/api';
 
+// ==================== ПЕРЕВОДЫ ====================
+const translations = {
+  ru: {
+    greeting: 'Привет,',
+    logout: 'Выйти',
+    pageTitle: 'Мои задачи',
+    subtitle: 'Организуйте свои дела эффективно',
+    completed: 'Выполнено',
+    uncompleted: 'Осталось',
+    placeholder: 'Добавьте новую задачу...',
+    add: 'Добавить',
+    emptyTitle: 'Пока нет задач',
+    emptyText: 'Добавьте первую задачу, чтобы начать!',
+    edit: 'Изменить',
+    delete: 'Удалить',
+    editModalTitle: 'Редактировать задачу',
+    editPlaceholder: 'Название задачи',
+    cancel: 'Отмена',
+    save: 'Сохранить',
+    // Auth
+    username: 'Имя пользователя',
+    password: 'Пароль',
+    confirm: 'Подтвердите пароль',
+    login: 'Войти',
+    loginLoading: 'Вход...',
+    signup: 'Создать аккаунт',
+    signupLoading: 'Регистрация...',
+    noAccount: 'Нет аккаунта?',
+    register: 'Зарегистрироваться',
+    hasAccount: 'Уже есть аккаунт?',
+    loginLink: 'Войти',
+    guestOption: 'Или',
+    guestLink: 'продолжить как гость',
+    guestName: 'Гость',
+    // Errors & Notifications
+    errorFillAll: 'Заполните все поля',
+    errorPasswordsMatch: 'Пароли не совпадают',
+    errorMinLength: 'Минимум 6 символов',
+    errorTaskText: 'Введите текст задачи',
+    successTaskCreated: 'Задача создана!',
+    errorTaskCreate: 'Не удалось создать задачу',
+    errorTaskUpdate: 'Не удалось обновить задачу',
+    errorTaskDelete: 'Не удалось удалить задачу',
+    confirmDelete: 'Удалить эту задачу?',
+    loginError: 'Ошибка входа',
+    registerError: 'Ошибка регистрации',
+    // Placeholders
+    loginPlaceholder: 'Введите имя пользователя',
+    passwordPlaceholder: 'Введите пароль',
+    signupUsernamePlaceholder: 'Придумайте имя пользователя',
+    signupPasswordPlaceholder: 'Минимум 6 символов',
+    confirmPlaceholder: 'Повторите пароль'
+  },
+  en: {
+    greeting: 'Hello,',
+    logout: 'Logout',
+    pageTitle: 'My Tasks',
+    subtitle: 'Organize your tasks efficiently',
+    completed: 'Completed',
+    uncompleted: 'Remaining',
+    placeholder: 'Add a new task...',
+    add: 'Add',
+    emptyTitle: 'No tasks yet',
+    emptyText: 'Add your first task to get started!',
+    edit: 'Edit',
+    delete: 'Delete',
+    editModalTitle: 'Edit Task',
+    editPlaceholder: 'Task name',
+    cancel: 'Cancel',
+    save: 'Save',
+    // Auth
+    username: 'Username',
+    password: 'Password',
+    confirm: 'Confirm Password',
+    login: 'Login',
+    loginLoading: 'Logging in...',
+    signup: 'Create Account',
+    signupLoading: 'Registering...',
+    noAccount: "Don't have an account?",
+    register: 'Sign up',
+    hasAccount: 'Already have an account?',
+    loginLink: 'Login',
+    guestOption: 'Or',
+    guestLink: 'continue as guest',
+    guestName: 'Guest',
+    // Errors & Notifications
+    errorFillAll: 'Please fill in all fields',
+    errorPasswordsMatch: 'Passwords do not match',
+    errorMinLength: 'Minimum 6 characters',
+    errorTaskText: 'Please enter task text',
+    successTaskCreated: 'Task created!',
+    errorTaskCreate: 'Failed to create task',
+    errorTaskUpdate: 'Failed to update task',
+    errorTaskDelete: 'Failed to delete task',
+    confirmDelete: 'Delete this task?',
+    loginError: 'Login error',
+    registerError: 'Registration error',
+    // Placeholders
+    loginPlaceholder: 'Enter username',
+    passwordPlaceholder: 'Enter password',
+    signupUsernamePlaceholder: 'Come up with a username',
+    signupPasswordPlaceholder: 'Minimum 6 characters',
+    confirmPlaceholder: 'Repeat password'
+  }
+};
+
+// Язык по умолчанию
+let currentLang = localStorage.getItem('app-language') || 'ru';
+
+// Функция для получения перевода
+function t(key) {
+  return translations[currentLang][key] || translations.ru[key] || key;
+}
+
+// Функция для смены языка
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('app-language', lang);
+  updateUILanguage();
+}
+
+// Функция для обновления UI с новым языком
+function updateUILanguage() {
+  // Update language icon
+  const langIcon = document.getElementById('lang-icon');
+  if (langIcon) {
+    langIcon.textContent = currentLang === 'ru' ? '🇬🇧' : '🇷🇺';
+  }
+
+  // Update nav
+  document.querySelector('.greeting-text').textContent = t('greeting');
+  document.querySelector('.logout-text').textContent = t('logout');
+  document.querySelector('.page-title').textContent = t('pageTitle');
+  document.querySelector('.subtitle-text').textContent = t('subtitle');
+  document.querySelector('.completed-label').textContent = t('completed');
+  document.querySelector('.uncompleted-label').textContent = t('uncompleted');
+  document.querySelector('.task-input').placeholder = t('placeholder');
+  document.querySelector('.add-button-text').textContent = t('add');
+  document.querySelector('.empty-title').textContent = t('emptyTitle');
+  document.querySelector('.empty-text').textContent = t('emptyText');
+  document.querySelector('.edit-modal-title').textContent = t('editModalTitle');
+  document.querySelector('#edit-input').placeholder = t('editPlaceholder');
+  document.querySelector('.cancel-text').textContent = t('cancel');
+  document.querySelector('.save-text').textContent = t('save');
+
+  // Update auth form
+  document.querySelector('.username-label').textContent = t('username');
+  document.querySelectorAll('.password-label').forEach(el => el.textContent = t('password'));
+  document.querySelector('.confirm-label').textContent = t('confirm');
+  document.querySelector('.login-text').textContent = t('login');
+  document.querySelector('.login-loading').textContent = t('loginLoading');
+  document.querySelector('.signup-text').textContent = t('signup');
+  document.querySelector('.signup-loading').textContent = t('signupLoading');
+  document.querySelector('.no-account-text').textContent = t('noAccount');
+  document.querySelector('.register-link').textContent = t('register');
+  document.querySelector('.has-account-text').textContent = t('hasAccount');
+  document.querySelector('.login-link').textContent = t('loginLink');
+  document.querySelector('.guest-option-text').textContent = t('guestOption');
+  document.querySelector('.guest-link').textContent = t('guestLink');
+
+  // Update placeholders
+  document.getElementById('login-username').placeholder = t('loginPlaceholder');
+  document.getElementById('login-password').placeholder = t('passwordPlaceholder');
+  document.getElementById('signup-username').placeholder = t('signupUsernamePlaceholder');
+  document.getElementById('signup-password').placeholder = t('signupPasswordPlaceholder');
+  document.getElementById('signup-confirm').placeholder = t('confirmPlaceholder');
+
+  // Update guest username if logged in as guest
+  if (currentUser && (currentUser.username === 'Гость' || currentUser.username === 'Guest')) {
+    currentUser.username = t('guestName');
+    document.getElementById('current-user').textContent = currentUser.username;
+  }
+}
+
 // ==================== DOM ELEMENTS ====================
 const authContainer = document.getElementById("auth-container");
 const appContainer = document.getElementById("app-container");
@@ -96,7 +270,7 @@ async function login(username, password) {
     await loadTasks();
     return true;
   } catch (error) {
-    showNotification(error.message || 'Ошибка входа', 'error');
+    showNotification(error.message || t('loginError'), 'error');
     return false;
   }
 }
@@ -119,7 +293,7 @@ async function signup(username, password) {
     await loadTasks();
     return true;
   } catch (error) {
-    showNotification(error.message || 'Ошибка регистрации', 'error');
+    showNotification(error.message || t('registerError'), 'error');
     return false;
   }
 }
@@ -145,11 +319,11 @@ async function logout() {
 }
 
 function loginAsGuest() {
-  currentUser = { username: "Гость" };
+  currentUser = { username: t('guestName') };
   isGuest = true;
   authToken = null;
 
-  localStorage.setItem('current-user', JSON.stringify({ username: "Гость" }));
+  localStorage.setItem('current-user', JSON.stringify({ username: t('guestName') }));
 
   showApp();
   listContainer.innerHTML = "";
@@ -235,8 +409,8 @@ function displayTasks(tasks) {
         </label>
         <span class="task-content">${escapeHtml(taskData.text)}</span>
         <div class="task-actions">
-          <button class="action-btn edit">Изменить</button>
-          <button class="action-btn delete">Удалить</button>
+          <button class="action-btn edit">${t('edit')}</button>
+          <button class="action-btn delete">${t('delete')}</button>
         </div>
       `;
 
@@ -271,18 +445,18 @@ async function saveTask(text) {
           </label>
           <span class="task-content">${escapeHtml(taskData.text)}</span>
           <div class="task-actions">
-            <button class="action-btn edit">Изменить</button>
-            <button class="action-btn delete">Удалить</button>
+            <button class="action-btn edit">${t('edit')}</button>
+            <button class="action-btn delete">${t('delete')}</button>
           </div>
         `;
         listContainer.appendChild(li);
         attachTaskListeners(li);
         updateCounters();
-        showNotification('Задача создана!');
+        showNotification(t('successTaskCreated'));
       }
     } catch (error) {
       console.error('Error creating task:', error);
-      showNotification(error.message || 'Не удалось создать задачу', 'error');
+      showNotification(error.message || t('errorTaskCreate'), 'error');
     }
   }
 }
@@ -297,8 +471,8 @@ function addLocalTask(text) {
     </label>
     <span class="task-content">${escapeHtml(text)}</span>
     <div class="task-actions">
-      <button class="action-btn edit">Изменить</button>
-      <button class="action-btn delete">Удалить</button>
+      <button class="action-btn edit">${t('edit')}</button>
+      <button class="action-btn delete">${t('delete')}</button>
     </div>
   `;
   listContainer.appendChild(li);
@@ -316,7 +490,7 @@ async function updateTaskOnServer(taskId, updates) {
       body: JSON.stringify(updates)
     });
   } catch (error) {
-    showNotification('Не удалось обновить задачу', 'error');
+    showNotification(t('errorTaskUpdate'), 'error');
   }
 }
 
@@ -328,7 +502,7 @@ async function deleteTaskFromServer(taskId) {
       method: 'DELETE'
     });
   } catch (error) {
-    showNotification('Не удалось удалить задачу', 'error');
+    showNotification(t('errorTaskDelete'), 'error');
   }
 }
 
@@ -375,7 +549,7 @@ function attachTaskListeners(taskElement) {
   });
 
   deleteBtn.addEventListener("click", async function() {
-    if (confirm("Удалить эту задачу?")) {
+    if (confirm(t('confirmDelete'))) {
       const taskId = parseInt(taskElement.dataset.taskId);
       if (taskId && !isGuest) {
         await deleteTaskFromServer(taskId);
@@ -389,7 +563,7 @@ function attachTaskListeners(taskElement) {
 async function addTask() {
   const task = inputBox.value.trim();
   if (!task) {
-    showNotification('Введите текст задачи', 'error');
+    showNotification(t('errorTaskText'), 'error');
     return;
   }
 
@@ -404,7 +578,7 @@ async function addTask() {
     console.log('Task saved successfully');
   } catch (error) {
     console.error('Failed to save task:', error);
-    showNotification('Ошибка при создании задачи', 'error');
+    showNotification(t('errorTaskCreate'), 'error');
   }
 }
 
@@ -427,7 +601,7 @@ async function saveEdit() {
   const newText = editInput.value.trim();
 
   if (!newText) {
-    showNotification('Введите текст задачи', 'error');
+    showNotification(t('errorTaskText'), 'error');
     return;
   }
 
@@ -468,7 +642,7 @@ loginBtn.addEventListener("click", async function() {
   const password = document.getElementById("login-password").value.trim();
 
   if (!username || !password) {
-    showNotification('Заполните все поля', 'error');
+    showNotification(t('errorFillAll'), 'error');
     return;
   }
 
@@ -483,17 +657,17 @@ signupBtn.addEventListener("click", async function() {
   const confirmPass = document.getElementById("signup-confirm").value.trim();
 
   if (!username || !password || !confirmPass) {
-    showNotification('Заполните все поля', 'error');
+    showNotification(t('errorFillAll'), 'error');
     return;
   }
 
   if (password !== confirmPass) {
-    showNotification('Пароли не совпадают', 'error');
+    showNotification(t('errorPasswordsMatch'), 'error');
     return;
   }
 
   if (password.length < 6) {
-    showNotification('Минимум 6 символов', 'error');
+    showNotification(t('errorMinLength'), 'error');
     return;
   }
 
@@ -534,6 +708,17 @@ editModal.addEventListener('click', function(e) {
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 
 document.addEventListener("DOMContentLoaded", async function() {
+  // Инициализация языка
+  updateUILanguage();
+
+  // Добавляем listener для переключения языка
+  const langToggle = document.getElementById('lang-toggle');
+  if (langToggle) {
+    langToggle.addEventListener('click', function() {
+      setLanguage(currentLang === 'ru' ? 'en' : 'ru');
+    });
+  }
+
   const savedToken = localStorage.getItem('auth-token');
   const savedUser = localStorage.getItem('current-user');
 

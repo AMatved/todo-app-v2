@@ -286,6 +286,28 @@ body {
   gap: 16px;
 }
 
+.btn-lang {
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-lang:hover {
+  background: var(--border);
+  transform: scale(1.05);
+}
+
+.btn-lang:active {
+  transform: scale(0.95);
+}
+
 .user-greeting {
   color: var(--text-secondary);
   font-size: 14px;
@@ -668,5 +690,10 @@ body {
 
   .user-greeting {
     display: none;
+  }
+
+  .btn-lang {
+    padding: 6px 10px;
+    font-size: 18px;
   }
 }
