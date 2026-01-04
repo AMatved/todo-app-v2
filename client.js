@@ -135,7 +135,7 @@ function updateUILanguage() {
   document.querySelector('.greeting-text').textContent = t('greeting');
   document.querySelector('.logout-text').textContent = t('logout');
   document.querySelector('.page-title').textContent = t('pageTitle');
-  document.querySelector('.subtitle-text').textContent = t('subtitle');
+  document.querySelectorAll('.subtitle-text').forEach(el => el.textContent = t('subtitle'));
   document.querySelector('.completed-label').textContent = t('completed');
   document.querySelector('.uncompleted-label').textContent = t('uncompleted');
   document.querySelector('.task-input').placeholder = t('placeholder');
