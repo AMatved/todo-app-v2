@@ -2632,6 +2632,11 @@ document.addEventListener("DOMContentLoaded", async function() {
     if (!layoutContainer) {
       layoutContainer = document.createElement('div');
       layoutContainer.id = 'dynamic-layout-container';
+      layoutContainer.style.display = 'flex';
+      layoutContainer.style.flexDirection = 'column';
+      layoutContainer.style.gap = '24px';
+      layoutContainer.style.width = '100%';
+
       // Insert after content-wrapper if it exists
       if (contentWrapper) {
         contentWrapper.after(layoutContainer);
@@ -2642,84 +2647,60 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     // Clear container
     layoutContainer.innerHTML = '';
-    layoutContainer.className = '';
 
     // Reset displays
+    if (contentWrapper) contentWrapper.style.display = '';
     if (calendarContainer) calendarContainer.style.display = '';
     if (chatContainer) chatContainer.style.display = '';
 
-    // Build layout based on order
-    const hasTasks = layout.includes('tasks');
-    const hasCalendar = layout.includes('calendar');
-    const hasChat = layout.includes('chat');
+    // Build layout based on exact order
+    let previousElement = null;
 
-    // Special case: tasks + (calendar and chat side by side) in that order
-    if (layout.length === 3 && layout[0] === 'tasks' && layout.includes('calendar') && layout.includes('chat')) {
-      // Tasks stay in content-wrapper
-      // Calendar and chat go side by side
-      const calendarChatWrapper = document.createElement('div');
-      calendarChatWrapper.className = 'calendar-chat-wrapper';
-
-      if (calendarContainer) {
-        calendarChatWrapper.appendChild(calendarContainer);
-      }
-      if (chatContainer) {
-        calendarChatWrapper.appendChild(chatContainer);
-      }
-
-      // Swap if chat should be first
-      if (layout.indexOf('chat') < layout.indexOf('calendar') && calendarContainer && chatContainer) {
-        calendarChatWrapper.insertBefore(chatContainer, calendarContainer);
-      }
-
-      layoutContainer.appendChild(calendarChatWrapper);
-    }
-    // Special case: only calendar and chat side by side
-    else if (layout.length === 2 && hasCalendar && hasChat && !hasTasks) {
-      const calendarChatWrapper = document.createElement('div');
-      calendarChatWrapper.className = 'calendar-chat-wrapper';
-
-      if (calendarContainer) {
-        calendarChatWrapper.appendChild(calendarContainer);
-      }
-      if (chatContainer) {
-        calendarChatWrapper.appendChild(chatContainer);
-      }
-
-      // Swap if chat should be first
-      if (layout[0] === 'chat' && calendarContainer && chatContainer) {
-        calendarChatWrapper.insertBefore(chatContainer, calendarContainer);
-      }
-
-      layoutContainer.appendChild(calendarChatWrapper);
-
-      // Hide tasks if they exist
-      if (contentWrapper) contentWrapper.style.display = 'none';
-    }
-    // Vertical layout - all blocks stacked
-    else {
-      if (hasTasks && contentWrapper) {
+    layout.forEach((blockName, index) => {
+      if (blockName === 'tasks' && contentWrapper) {
         layoutContainer.appendChild(contentWrapper);
-        contentWrapper.style.display = '';
-      }
+        previousElement = contentWrapper;
+      } else if (blockName === 'calendar' && calendarContainer) {
+        // Check if next block is chat and both should be side by side
+        const nextBlock = layout[index + 1];
+        if (nextBlock === 'chat' && chatContainer && !layout.includes('tasks')) {
+          // Calendar and chat side by side (only when no tasks)
+          const row = document.createElement('div');
+          row.className = 'calendar-chat-wrapper';
+          row.style.display = 'grid';
+          row.style.gridTemplateColumns = '1fr 1fr';
+          row.style.gap = '24px';
 
-      if (hasCalendar && calendarContainer) {
-        layoutContainer.appendChild(calendarContainer);
-      }
+          row.appendChild(calendarContainer);
+          row.appendChild(chatContainer);
 
-      if (hasChat && chatContainer) {
+          // Swap if chat should be before calendar (this shouldn't happen with current logic)
+          if (layout.indexOf('chat') < index) {
+            row.insertBefore(chatContainer, calendarContainer);
+          }
+
+          layoutContainer.appendChild(row);
+
+          // Skip next iteration since we already added chat
+          layout[index + 1] = 'added';
+        } else {
+          layoutContainer.appendChild(calendarContainer);
+        }
+        previousElement = calendarContainer;
+      } else if (blockName === 'chat' && chatContainer && blockName !== 'added') {
         layoutContainer.appendChild(chatContainer);
+        previousElement = chatContainer;
       }
-    }
+    });
 
     // Hide blocks that are not in layout
-    if (!hasTasks && contentWrapper) {
+    if (!layout.includes('tasks') && contentWrapper) {
       contentWrapper.style.display = 'none';
     }
-    if (!hasCalendar && calendarContainer) {
+    if (!layout.includes('calendar') && calendarContainer) {
       calendarContainer.style.display = 'none';
     }
-    if (!hasChat && chatContainer) {
+    if (!layout.includes('chat') && chatContainer) {
       chatContainer.style.display = 'none';
     }
   }
