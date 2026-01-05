@@ -1464,13 +1464,19 @@ function getTasksForDate(day, month, year) {
   const targetDate = new Date(year, month, day);
   const targetDateStr = targetDate.toISOString().split('T')[0];
 
+  console.log('getTasksForDate called:', { day, month, year, targetDateStr });
+  console.log('allTasks:', allTasks);
+  console.log('allTasks.length:', allTasks.length);
+
   return allTasks.filter(task => {
     // Use due_date if it exists, otherwise fall back to created_at
     if (task.due_date) {
+      console.log(`Task "${task.text}" - due_date: ${task.due_date}, target: ${targetDateStr}, match: ${task.due_date === targetDateStr}`);
       return task.due_date === targetDateStr;
     } else {
       const taskDate = new Date(task.created_at);
       const taskDateStr = taskDate.toISOString().split('T')[0];
+      console.log(`Task "${task.text}" - created_at: ${taskDateStr}, target: ${targetDateStr}, match: ${taskDateStr === targetDateStr}`);
       return taskDateStr === targetDateStr;
     }
   });
