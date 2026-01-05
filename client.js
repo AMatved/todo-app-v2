@@ -1320,6 +1320,9 @@ function attachTaskListeners(taskElement) {
       if (taskIndex !== -1) {
         allTasks[taskIndex].completed = newCompletedState;
         updateCounters();
+        updateTodayProgress();
+        // Re-render to update color (green for completed)
+        applyFiltersAndSort();
       }
 
       // Отправляем на сервер в фоне
@@ -1332,11 +1335,15 @@ function attachTaskListeners(taskElement) {
         if (taskIndex !== -1) {
           allTasks[taskIndex].completed = !newCompletedState;
           updateCounters();
+          updateTodayProgress();
+          applyFiltersAndSort();
         }
       }
     } else {
       // Для гостей обновляем напрямую
       updateCounters();
+      updateTodayProgress();
+      applyFiltersAndSort();
     }
   });
 
