@@ -1671,6 +1671,7 @@ body.theme-sakura .btn-primary {
   margin-top: 24px;
   box-shadow: 0 4px 12px var(--shadow);
   transition: transform 0.3s ease, margin-top 0.3s ease;
+  width: 100%;
 }
 
 .calendar-header {
@@ -1800,9 +1801,8 @@ body.theme-sakura .btn-primary {
 }
 
 /* Calendar animation when tasks toggle */
-.tasks-container.collapsed + .calendar-container {
+.tasks-container.collapsed ~ .calendar-container {
   margin-top: 0;
-  animation: slideUp 0.3s ease;
 }
 
 /* Responsive */

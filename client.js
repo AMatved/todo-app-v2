@@ -787,17 +787,20 @@ let tasksCollapsed = false;
 function toggleTasksVisibility() {
   tasksCollapsed = !tasksCollapsed;
   const taskList = document.getElementById('list-container');
+  const tasksContainer = document.querySelector('.tasks-container');
   const collapseIcon = document.getElementById('collapse-icon');
   const expandIcon = document.getElementById('expand-icon');
   const toggleText = document.querySelector('.toggle-tasks-text');
 
   if (tasksCollapsed) {
     taskList.classList.add('collapsed');
+    if (tasksContainer) tasksContainer.classList.add('collapsed');
     collapseIcon.style.display = 'none';
     expandIcon.style.display = 'block';
     toggleText.textContent = t('showTasks');
   } else {
     taskList.classList.remove('collapsed');
+    if (tasksContainer) tasksContainer.classList.remove('collapsed');
     collapseIcon.style.display = 'block';
     expandIcon.style.display = 'none';
     toggleText.textContent = t('hideTasks');
@@ -812,11 +815,13 @@ function restoreTasksCollapsedState() {
   if (savedState === 'true') {
     tasksCollapsed = true;
     const taskList = document.getElementById('list-container');
+    const tasksContainer = document.querySelector('.tasks-container');
     const collapseIcon = document.getElementById('collapse-icon');
     const expandIcon = document.getElementById('expand-icon');
     const toggleText = document.querySelector('.toggle-tasks-text');
 
     taskList.classList.add('collapsed');
+    if (tasksContainer) tasksContainer.classList.add('collapsed');
     collapseIcon.style.display = 'none';
     expandIcon.style.display = 'block';
     toggleText.textContent = t('showTasks');
