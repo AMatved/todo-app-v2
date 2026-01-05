@@ -2501,12 +2501,12 @@ document.addEventListener("DOMContentLoaded", async function() {
   // Apply custom layout to page
   function applyCustomLayout(layout) {
     const contentWrapper = document.querySelector('.content-wrapper');
-    const calendarChatWrapper = document.querySelector('.calendar-chat-wrapper');
+    let calendarChatWrapper = document.querySelector('.calendar-chat-wrapper');
     const calendarContainer = document.querySelector('.calendar-container');
     const chatContainer = document.querySelector('.chat-container');
     const mainContent = document.querySelector('.main-content');
 
-    if (!contentWrapper || !calendarChatWrapper) return;
+    if (!contentWrapper) return;
 
     // Reset to default structure first
     const existingCalendarChatWrapper = document.querySelector('.calendar-chat-wrapper');
@@ -2518,6 +2518,10 @@ document.addEventListener("DOMContentLoaded", async function() {
     if (layout.includes('tasks')) {
       // Tasks are always in content-wrapper
     }
+
+    // Reset displays
+    if (calendarContainer) calendarContainer.style.display = '';
+    if (chatContainer) chatContainer.style.display = '';
 
     if (layout.includes('calendar') && layout.includes('chat')) {
       // Both calendar and chat side by side
