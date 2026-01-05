@@ -1130,7 +1130,10 @@ body {
 
 /* Tooltip */
 .comment-tooltip {
-  position: fixed;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1143,19 +1146,17 @@ body {
   box-shadow: 0 4px 12px var(--shadow);
   white-space: normal;
   word-wrap: break-word;
-  z-index: 99999;
+  z-index: 1000;
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  display: none;
-  transform: translateX(-50%);
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
 }
 
 .comment-tooltip::after {
   content: '';
   position: absolute;
-  bottom: -6px;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
@@ -1165,7 +1166,6 @@ body {
 .task-comment-wrapper:hover .comment-tooltip {
   opacity: 1;
   visibility: visible;
-  display: block;
 }
 
 /* ==================== ПУСТОЕ СОСТОЯНИЕ ==================== */
