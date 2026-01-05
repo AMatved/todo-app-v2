@@ -62,6 +62,20 @@ async function initializeDatabase() {
       }
     }
 
+    // Migration: add due_date column if it doesn't exist
+    try {
+      await client.query(`
+        ALTER TABLE tasks
+        ADD COLUMN IF NOT EXISTS due_date DATE DEFAULT NULL
+      `);
+      console.log('✅ Due date column added to tasks table');
+    } catch (err) {
+      // Column might already exist, ignore error
+      if (!err.message.includes('already exists')) {
+        console.error('Error adding due_date column:', err.message);
+      }
+    }
+
     // Create deleted_tasks table (trash)
     await client.query(`
       CREATE TABLE IF NOT EXISTS deleted_tasks (
@@ -140,16 +154,16 @@ const getUserTasks = async (userId) => {
   return result.rows;
 };
 
-const createTask = async (userId, text, category = null) => {
+const createTask = async (userId, text, category = null, dueDate = null) => {
   const result = await pool.query(
-    'INSERT INTO tasks (user_id, text, category) VALUES ($1, $2, $3) RETURNING *',
-    [userId, text, category]
+    'INSERT INTO tasks (user_id, text, category, due_date) VALUES ($1, $2, $3, $4) RETURNING *',
+    [userId, text, category, dueDate]
   );
   return result.rows[0];
 };
 
 const updateTask = async (taskId, userId, updates) => {
-  const { text, completed, category } = updates;
+  const { text, completed, category, dueDate } = updates;
 
   console.log('database-pg.js updateTask called with:', { taskId, userId, text, completed, category });
 
@@ -168,6 +182,10 @@ const updateTask = async (taskId, userId, updates) => {
   if (category !== undefined) {
     fields.push(`category = $${paramCount++}`);
     values.push(category);
+  }
+  if (dueDate !== undefined) {
+    fields.push(`due_date = $${paramCount++}`);
+    values.push(dueDate);
   }
 
   fields.push(`updated_at = CURRENT_TIMESTAMP`);

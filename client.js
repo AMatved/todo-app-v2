@@ -880,13 +880,16 @@ function displayTasks(tasks) {
   updateCounters();
 }
 
-async function saveTask(text) {
+async function saveTask(text, dueDate) {
   if (isGuest) {
     // Гости - только локально
     addLocalTask(text);
   } else {
     try {
-      const requestBody = { text };
+      const requestBody = {
+        text,
+        due_date: dueDate
+      };
       if (selectedTaskCategory) {
         requestBody.category = selectedTaskCategory;
       }
@@ -1250,15 +1253,28 @@ function attachTaskListeners(taskElement) {
 
 async function addTask() {
   const task = inputBox.value.trim();
+  const dueDateInput = document.getElementById('due-date-input');
+  const dueDate = dueDateInput ? dueDateInput.value : null;
+
   if (!task) {
     showNotification(t('errorTaskText'), 'error');
     return;
   }
 
+  if (!dueDate) {
+    showNotification('Пожалуйста, выберите дату для задачи', 'error');
+    dueDateInput.focus();
+    return;
+  }
+
   inputBox.value = "";
+  if (dueDateInput) {
+    dueDateInput.value = '';
+    dueDateInput.classList.remove('has-value');
+  }
 
   try {
-    await saveTask(task);
+    await saveTask(task, dueDate);
   } catch (error) {
     console.error('Failed to save task:', error);
     showNotification(t('errorTaskCreate'), 'error');
@@ -1449,9 +1465,14 @@ function getTasksForDate(day, month, year) {
   const targetDateStr = targetDate.toISOString().split('T')[0];
 
   return allTasks.filter(task => {
-    const taskDate = new Date(task.created_at);
-    const taskDateStr = taskDate.toISOString().split('T')[0];
-    return taskDateStr === targetDateStr;
+    // Use due_date if it exists, otherwise fall back to created_at
+    if (task.due_date) {
+      return task.due_date === targetDateStr;
+    } else {
+      const taskDate = new Date(task.created_at);
+      const taskDateStr = taskDate.toISOString().split('T')[0];
+      return taskDateStr === targetDateStr;
+    }
   });
 }
 
@@ -1698,6 +1719,18 @@ document.addEventListener("DOMContentLoaded", async function() {
 
   // Инициализация календаря
   renderCalendar();
+
+  // Добавляем listener для date input
+  const dueDateInput = document.getElementById('due-date-input');
+  if (dueDateInput) {
+    dueDateInput.addEventListener('change', function() {
+      if (this.value) {
+        this.classList.add('has-value');
+      } else {
+        this.classList.remove('has-value');
+      }
+    });
+  }
 
   // Добавляем listener для переключения видимости задач
   const toggleTasksBtn = document.getElementById('toggle-tasks-btn');
