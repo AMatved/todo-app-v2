@@ -1146,6 +1146,7 @@ body {
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
+  transform: translateX(-50%);
   transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
