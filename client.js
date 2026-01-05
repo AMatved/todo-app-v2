@@ -95,7 +95,15 @@ const translations = {
     passwordPlaceholder: 'Введите пароль',
     signupUsernamePlaceholder: 'Придумайте имя пользователя',
     signupPasswordPlaceholder: 'Минимум 6 символов',
-    confirmPlaceholder: 'Повторите пароль'
+    confirmPlaceholder: 'Повторите пароль',
+    // Themes
+    themeTitle: 'Выберите тему',
+    themeSpring: 'Весна',
+    themeSummer: 'Лето',
+    themeAutumn: 'Осень',
+    themeWinter: 'Зима',
+    themeSakura: 'Сакура',
+    themeBtn: 'Тема'
   },
   en: {
     greeting: 'Hello,',
@@ -188,7 +196,15 @@ const translations = {
     passwordPlaceholder: 'Enter password',
     signupUsernamePlaceholder: 'Come up with a username',
     signupPasswordPlaceholder: 'Minimum 6 characters',
-    confirmPlaceholder: 'Repeat password'
+    confirmPlaceholder: 'Repeat password',
+    // Themes
+    themeTitle: 'Choose Theme',
+    themeSpring: 'Spring',
+    themeSummer: 'Summer',
+    themeAutumn: 'Autumn',
+    themeWinter: 'Winter',
+    themeSakura: 'Sakura',
+    themeBtn: 'Theme'
   }
 };
 
@@ -326,6 +342,24 @@ function updateUILanguage() {
   const toggleText = document.querySelector('.toggle-tasks-text');
   if (toggleText) {
     toggleText.textContent = tasksCollapsed ? t('showTasks') : t('hideTasks');
+  }
+
+  // Update theme modal
+  const themeModalTitle = document.querySelector('.theme-modal-title');
+  if (themeModalTitle) {
+    themeModalTitle.textContent = t('themeTitle');
+  }
+
+  document.querySelector('.theme-name-spring').textContent = t('themeSpring');
+  document.querySelector('.theme-name-summer').textContent = t('themeSummer');
+  document.querySelector('.theme-name-autumn').textContent = t('themeAutumn');
+  document.querySelector('.theme-name-winter').textContent = t('themeWinter');
+  document.querySelector('.theme-name-sakura').textContent = t('themeSakura');
+
+  // Update theme button title
+  const themeBtn = document.getElementById('theme-btn');
+  if (themeBtn) {
+    themeBtn.title = t('themeBtn');
   }
 
   // Update guest username if logged in as guest
@@ -1300,6 +1334,54 @@ editModal.addEventListener('click', function(e) {
   }
 });
 
+// ==================== THEMES ====================
+
+// Function to apply theme
+function applyTheme(themeName) {
+  // Remove all theme classes
+  document.body.classList.remove('theme-spring', 'theme-summer', 'theme-autumn', 'theme-winter', 'theme-sakura');
+
+  // Apply new theme if not default
+  if (themeName && themeName !== 'default') {
+    document.body.classList.add(`theme-${themeName}`);
+  }
+
+  // Update active state in theme cards
+  document.querySelectorAll('.theme-card').forEach(card => {
+    card.classList.remove('active');
+    if (card.dataset.theme === themeName) {
+      card.classList.add('active');
+    }
+  });
+
+  // Save to localStorage
+  localStorage.setItem('app-theme', themeName || 'default');
+}
+
+// Function to get current theme
+function getCurrentTheme() {
+  return localStorage.getItem('app-theme') || 'default';
+}
+
+// Function to open theme modal
+function openThemeModal() {
+  const themeModal = document.getElementById('theme-modal');
+  if (themeModal) {
+    themeModal.style.display = 'flex';
+    // Update active state
+    const currentTheme = getCurrentTheme();
+    applyTheme(currentTheme);
+  }
+}
+
+// Function to close theme modal
+function closeThemeModal() {
+  const themeModal = document.getElementById('theme-modal');
+  if (themeModal) {
+    themeModal.style.display = 'none';
+  }
+}
+
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 
 document.addEventListener("DOMContentLoaded", async function() {
@@ -1355,6 +1437,41 @@ document.addEventListener("DOMContentLoaded", async function() {
       closeTrash();
     }
   });
+
+  // Добавляем listeners для тем
+  const themeBtn = document.getElementById('theme-btn');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', openThemeModal);
+  }
+
+  const themeClose = document.getElementById('theme-close');
+  if (themeClose) {
+    themeClose.addEventListener('click', closeThemeModal);
+  }
+
+  // Добавляем listeners для карточек тем
+  document.querySelectorAll('.theme-card').forEach(card => {
+    card.addEventListener('click', function() {
+      const theme = this.dataset.theme;
+      applyTheme(theme);
+    });
+  });
+
+  // Закрытие модального окна тем по клику на оверлей
+  const themeModal = document.getElementById('theme-modal');
+  if (themeModal) {
+    themeModal.addEventListener('click', function(e) {
+      if (e.target === themeModal || e.target.classList.contains('modal-overlay')) {
+        closeThemeModal();
+      }
+    });
+  }
+
+  // Инициализация темы при загрузке
+  const savedTheme = getCurrentTheme();
+  if (savedTheme && savedTheme !== 'default') {
+    applyTheme(savedTheme);
+  }
 
   // Добавляем listener для переключения видимости задач
   const toggleTasksBtn = document.getElementById('toggle-tasks-btn');
