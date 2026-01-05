@@ -843,28 +843,38 @@ function restoreTasksCollapsedState() {
 function getUrgencyColor(task) {
   if (!task.due_date || task.completed) return null;
 
+  // Get current date in local timezone (set to midnight)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const dueDate = new Date(task.due_date);
+  // Parse due date - handle both ISO format and plain date strings
+  let dueDate;
+  if (task.due_date.includes('T')) {
+    // ISO format: "2026-01-15T00:00:00.000Z"
+    dueDate = new Date(task.due_date);
+  } else {
+    // Plain format: "2026-01-15"
+    const parts = task.due_date.split('-');
+    dueDate = new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+
   dueDate.setHours(0, 0, 0, 0);
 
   const timeDiff = dueDate - today;
   const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
   // Color scale based on days remaining
+  // Only RED for overdue and today (as requested)
   if (daysDiff < 0) {
     return { color: '#ef4444', intensity: 1, label: 'Просрочено' }; // Red - overdue
   } else if (daysDiff === 0) {
-    return { color: '#f97316', intensity: 0.9, label: 'Сегодня' }; // Orange - today
+    return { color: '#ef4444', intensity: 0.95, label: 'Сегодня' }; // Red - today (changed from orange)
   } else if (daysDiff === 1) {
-    return { color: '#eab308', intensity: 0.7, label: 'Завтра' }; // Yellow - tomorrow
-  } else if (daysDiff <= 3) {
-    return { color: '#84cc16', intensity: 0.5, label: 'Через 2-3 дня' }; // Lime
+    return { color: '#22c55e', intensity: 0.3, label: 'Завтра' }; // Green - tomorrow
   } else if (daysDiff <= 7) {
-    return { color: '#22c55e', intensity: 0.3, label: 'На этой неделе' }; // Green
+    return { color: '#10b981', intensity: 0.2, label: 'На этой неделе' }; // Light green
   } else {
-    return { color: '#10b981', intensity: 0.2, label: 'Есть время' }; // Light green
+    return null; // No color for tasks more than a week away
   }
 }
 
@@ -1392,13 +1402,24 @@ function attachTaskListeners(taskElement) {
       // Create a temporary modal for date/time editing
       const modal = document.createElement('div');
       modal.className = 'modal-overlay';
+
+      // Format date for input (yyyy-MM-dd)
+      const formatDateForInput = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       modal.innerHTML = `
         <div class="modal-content">
           <h3>Изменить дату и время</h3>
           <div class="datetime-edit-form">
             <label>
               Дата:
-              <input type="date" id="edit-date" value="${task.due_date || ''}">
+              <input type="date" id="edit-date" value="${formatDateForInput(task.due_date)}">
             </label>
             <label>
               Время:
