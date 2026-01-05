@@ -1123,6 +1123,7 @@ body {
   word-wrap: break-word;
   z-index: 99999; /* Much higher z-index */
   pointer-events: none;
+  display: none; /* Hidden by default */
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;
@@ -1141,6 +1142,7 @@ body {
 .task-comment-wrapper:hover .comment-tooltip {
   opacity: 1;
   visibility: visible;
+  display: block;
 }
 
 /* ==================== ПУСТОЕ СОСТОЯНИЕ ==================== */

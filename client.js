@@ -882,7 +882,7 @@ function displayTasks(tasks) {
 
       // Comment icon with tooltip
       const commentIcon = taskData.comment ? `
-        <div class="task-comment-wrapper" class="comment-has-content">
+        <div class="task-comment-wrapper">
           <button class="comment-btn" title="Комментарий">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -891,11 +891,13 @@ function displayTasks(tasks) {
           <div class="comment-tooltip">${escapeHtml(taskData.comment)}</div>
         </div>
       ` : `
-        <button class="comment-btn add-comment-btn" title="Добавить комментарий">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </button>
+        <div class="task-comment-wrapper">
+          <button class="comment-btn add-comment-btn" title="Добавить комментарий">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+        </div>
       `;
 
       li.innerHTML = `
@@ -928,7 +930,7 @@ function displayTasks(tasks) {
           commentBtn.addEventListener('mouseenter', function() {
             const rect = commentBtn.getBoundingClientRect();
             tooltip.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
-            tooltip.style.left = rect.left + (rect.width / 2) + 'px';
+            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
             tooltip.style.transform = 'translateX(-50%)';
           });
         }
