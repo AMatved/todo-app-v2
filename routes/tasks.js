@@ -110,7 +110,7 @@ router.delete('/completed', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id);
-    const { text, completed, category, due_date } = req.body;
+    const { text, completed, category, due_date, due_time, comment } = req.body;
 
     console.log('PUT /api/tasks/:id - Task ID:', taskId);
     console.log('PUT /api/tasks/:id - Request body:', req.body);
@@ -132,6 +132,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
     if (completed !== undefined) updates.completed = completed;
     if (category !== undefined) updates.category = category;
     if (due_date !== undefined) updates.dueDate = due_date;
+    if (due_time !== undefined) updates.dueTime = due_time;
+    if (comment !== undefined) updates.comment = comment;
 
     console.log('PUT /api/tasks/:id - Updates to apply:', updates);
 
