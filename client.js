@@ -915,6 +915,17 @@ function displayTasks(tasks) {
 
       listContainer.appendChild(li);
       attachTaskListeners(li);
+
+      // Setup tooltip positioning
+      const commentWrapper = li.querySelector('.task-comment-wrapper');
+      const tooltip = commentWrapper?.querySelector('.comment-tooltip');
+      if (commentWrapper && tooltip) {
+        commentWrapper.addEventListener('mouseenter', function() {
+          const rect = commentWrapper.getBoundingClientRect();
+          tooltip.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+          tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+        });
+      }
     });
   }
   updateCounters();
