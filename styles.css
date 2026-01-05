@@ -961,7 +961,7 @@ body {
 }
 
 .task-item {
-  background: var(--bg-primary);
+  background-color: var(--bg-primary);
   padding: 20px;
   border-radius: 16px;
   box-shadow: 0 2px 8px var(--shadow);

@@ -895,7 +895,10 @@ function displayTasks(tasks) {
       const urgency = getUrgencyColor(taskData);
       if (urgency) {
         li.style.borderLeft = `4px solid ${urgency.color}`;
-        li.style.backgroundColor = `${urgency.color}${Math.round(urgency.intensity * 20).toString(16).padStart(2, '0')}`;
+        // Use gradient from left to right with fading opacity
+        const opacity = 0.08 + (urgency.intensity * 0.12);
+        li.style.background = `linear-gradient(to right, ${urgency.color}${Math.round(opacity * 255).toString(16).padStart(2, '0')} 0%, transparent 100%)`;
+        li.setAttribute('data-urgency-color', urgency.color);
       }
 
       // Check if task is postponed
