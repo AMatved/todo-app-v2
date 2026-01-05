@@ -1448,7 +1448,7 @@ function getTasksForDate(day, month, year) {
   const targetDate = new Date(year, month, day);
   const targetDateStr = targetDate.toISOString().split('T')[0];
 
-  return tasks.filter(task => {
+  return allTasks.filter(task => {
     const taskDate = new Date(task.created_at);
     const taskDateStr = taskDate.toISOString().split('T')[0];
     return taskDateStr === targetDateStr;
