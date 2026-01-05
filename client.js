@@ -880,17 +880,17 @@ function displayTasks(tasks) {
 
       const categoryIcon = taskData.category ? categoryIcons[taskData.category] : '';
 
-      // Comment display with text preview
+      // Comment icon with tooltip
       const commentDisplay = taskData.comment ? `
-        <div class="task-comment-wrapper" title="Нажмите, чтобы изменить комментарий">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="comment-icon">
+        <div class="task-comment-wrapper">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="comment-icon">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          <span class="comment-text">${escapeHtml(taskData.comment.length > 30 ? taskData.comment.substring(0, 30) + '...' : taskData.comment)}</span>
+          <div class="comment-tooltip">${escapeHtml(taskData.comment)}</div>
         </div>
       ` : `
-        <div class="task-comment-wrapper add-comment" title="Нажмите, чтобы добавить комментарий">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="comment-icon">
+        <div class="task-comment-wrapper add-comment">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="comment-icon">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
@@ -915,6 +915,17 @@ function displayTasks(tasks) {
 
       listContainer.appendChild(li);
       attachTaskListeners(li);
+
+      // Setup tooltip positioning
+      const commentWrapper = li.querySelector('.task-comment-wrapper');
+      const tooltip = commentWrapper?.querySelector('.comment-tooltip');
+      if (commentWrapper && tooltip) {
+        commentWrapper.addEventListener('mouseenter', function() {
+          const rect = commentWrapper.getBoundingClientRect();
+          tooltip.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+          tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+        });
+      }
     });
   }
   updateCounters();
