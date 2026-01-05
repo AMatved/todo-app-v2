@@ -841,8 +841,7 @@ function restoreTasksCollapsedState() {
 
 // Calculate urgency color based on time remaining
 function getUrgencyColor(task) {
-  // Don't show urgency for completed tasks
-  if (!task.due_date || task.completed) return null;
+  if (!task.due_date) return null;
 
   // Get current date in local timezone (set to midnight)
   const today = new Date();
@@ -864,19 +863,20 @@ function getUrgencyColor(task) {
   const timeDiff = dueDate - today;
   const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-  // Color scale based on days remaining
-  // Only RED for overdue (not today)
-  if (daysDiff < 0) {
-    return { color: '#ef4444', intensity: 1, label: 'Просрочено' }; // Red - ONLY overdue
-  } else if (daysDiff === 0) {
-    return null; // No special color for today's tasks
-  } else if (daysDiff === 1) {
-    return { color: '#22c55e', intensity: 0.3, label: 'Завтра' }; // Green - tomorrow
-  } else if (daysDiff <= 7) {
-    return { color: '#10b981', intensity: 0.2, label: 'На этой неделе' }; // Light green
-  } else {
-    return null; // No color for tasks more than a week away
+  // Color scale based on task status and due date
+  if (task.completed) {
+    return { color: '#22c55e', intensity: 0.2, label: 'Выполнено' }; // Green - completed
+  } else if (daysDiff < 0) {
+    return { color: '#ef4444', intensity: 1, label: 'Просрочено' }; // Red - overdue
+  } else if (daysDiff >= 14) {
+    return null; // No color for tasks more than 2 weeks away
+  } else if (daysDiff >= 7) {
+    return { color: '#3b82f6', intensity: 0.25, label: 'Следующая неделя' }; // Blue - next week
+  } else if (daysDiff >= 0) {
+    return { color: '#f97316', intensity: 0.3, label: 'Эта неделя' }; // Orange - this week and today
   }
+
+  return null;
 }
 
 function displayTasks(tasks) {
