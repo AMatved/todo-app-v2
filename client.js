@@ -2414,6 +2414,35 @@ function loadChatHistory() {
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 
 document.addEventListener("DOMContentLoaded", async function() {
+  // Handle image loading errors - fallback to SVG icons
+  const trashImg = document.querySelector('.trash-icon-img');
+  if (trashImg) {
+    trashImg.onerror = function() {
+      console.warn('Trash icon image failed to load, using SVG fallback');
+      const btn = this.parentNode;
+      this.style.display = 'none';
+      btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <line x1="10" y1="11" x2="10" y2="17"></line>
+        <line x1="14" y1="11" x2="14" y2="17"></line>
+      </svg>`;
+    };
+  }
+
+  const brandImg = document.querySelector('.brand-icon');
+  if (brandImg && brandImg.tagName === 'IMG') {
+    brandImg.onerror = function() {
+      console.warn('Brand icon image failed to load, using text fallback');
+      this.style.display = 'none';
+      const brandContainer = this.parentNode;
+      const textIcon = document.createElement('span');
+      textIcon.className = 'brand-icon';
+      textIcon.textContent = '✓';
+      brandContainer.insertBefore(textIcon, brandContainer.firstChild);
+    };
+  }
+
   // Инициализация языка
   updateUILanguage();
 

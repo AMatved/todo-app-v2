@@ -100,6 +100,30 @@ app.use('/api/tasks', generalLimiter, taskRoutes);
 app.use('/api/trash', generalLimiter, trashRoutes);
 app.use('/api/chat', generalLimiter, chatRoutes);
 
+// Test endpoint to check static files
+app.get('/api/test-files', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const iconsPath = path.join(__dirname, 'public', 'icons');
+
+  try {
+    const files = fs.readdirSync(iconsPath);
+    res.json({
+      success: true,
+      iconsPath: iconsPath,
+      files: files,
+      trashExists: fs.existsSync(path.join(iconsPath, 'trash.jpg')),
+      brandExists: fs.existsSync(path.join(iconsPath, 'brand.jpg'))
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      error: error.message,
+      iconsPath: iconsPath
+    });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

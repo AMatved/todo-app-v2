@@ -314,6 +314,13 @@ body {
   display: block;
 }
 
+/* Trash icon specific styling */
+.trash-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 .btn-icon:hover {
   background: var(--border);
   transform: scale(1.05);
