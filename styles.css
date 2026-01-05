@@ -300,6 +300,14 @@ body {
   min-height: 44px;
 }
 
+/* Style for images inside icon buttons */
+.btn-icon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+}
+
 .btn-icon:hover {
   background: var(--border);
   transform: scale(1.05);
