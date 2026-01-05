@@ -1075,6 +1075,77 @@ body {
   color: var(--danger);
 }
 
+/* Comment button and tooltip */
+.comment-btn {
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--primary);
+}
+
+.comment-btn.add-comment-btn {
+  opacity: 0.6;
+}
+
+.comment-btn.add-comment-btn:hover {
+  opacity: 1;
+}
+
+.task-comment-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.comment-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-width: 150px;
+  max-width: 250px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px var(--shadow);
+  white-space: normal;
+  word-wrap: break-word;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.comment-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--bg-primary);
+}
+
+.task-comment-wrapper:hover .comment-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* ==================== ПУСТОЕ СОСТОЯНИЕ ==================== */
 
 .empty-state {

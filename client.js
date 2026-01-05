@@ -880,6 +880,24 @@ function displayTasks(tasks) {
 
       const categoryIcon = taskData.category ? categoryIcons[taskData.category] : '';
 
+      // Comment icon with tooltip
+      const commentIcon = taskData.comment ? `
+        <div class="task-comment-wrapper" class="comment-has-content">
+          <button class="comment-btn" title="Комментарий">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+          <div class="comment-tooltip">${escapeHtml(taskData.comment)}</div>
+        </div>
+      ` : `
+        <button class="comment-btn add-comment-btn" title="Добавить комментарий">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </button>
+      `;
+
       li.innerHTML = `
         <label class="task-checkbox">
           <input type="checkbox" ${taskData.completed ? 'checked' : ''}>
@@ -891,6 +909,7 @@ function displayTasks(tasks) {
           ${timestamp ? `<span class="task-timestamp" data-timestamp="${dateToShow}">${timestamp}</span>` : ''}
         </div>
         <div class="task-actions">
+          ${commentIcon}
           <button class="action-btn edit">${t('edit')}</button>
           <button class="action-btn delete">${t('delete')}</button>
         </div>
@@ -1280,6 +1299,34 @@ function attachTaskListeners(taskElement) {
       }
     }
   });
+
+  // Comment button handler
+  const commentBtn = taskElement.querySelector('.comment-btn');
+  if (commentBtn) {
+    commentBtn.addEventListener('click', async function() {
+      const taskId = parseInt(taskElement.dataset.taskId);
+      const task = allTasks.find(t => t.id === taskId);
+
+      if (!task) return;
+
+      const currentComment = task.comment || '';
+      const newComment = prompt('Введите комментарий:', currentComment);
+
+      if (newComment !== null) { // User didn't cancel
+        try {
+          await updateTaskOnServer(taskId, { comment: newComment || null });
+          // Update local task
+          task.comment = newComment || null;
+          // Re-render to show/hide comment
+          applyFiltersAndSort();
+          showNotification('Комментарий сохранён', 'success');
+        } catch (error) {
+          console.error('Failed to save comment:', error);
+          showNotification('Ошибка сохранения комментария', 'error');
+        }
+      }
+    });
+  }
 }
 
 async function addTask() {

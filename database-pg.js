@@ -90,6 +90,20 @@ async function initializeDatabase() {
       }
     }
 
+    // Migration: add comment column if it doesn't exist
+    try {
+      await client.query(`
+        ALTER TABLE tasks
+        ADD COLUMN IF NOT EXISTS comment TEXT DEFAULT NULL
+      `);
+      console.log('✅ Comment column added to tasks table');
+    } catch (err) {
+      // Column might already exist, ignore error
+      if (!err.message.includes('already exists')) {
+        console.error('Error adding comment column:', err.message);
+      }
+    }
+
     // Create deleted_tasks table (trash)
     await client.query(`
       CREATE TABLE IF NOT EXISTS deleted_tasks (
@@ -161,25 +175,25 @@ const updateLastLogin = async (userId) => {
 
 const getUserTasks = async (userId) => {
   const result = await pool.query(
-    `SELECT id, text, completed, category, created_at, updated_at, due_date, due_time
+    `SELECT id, text, completed, category, created_at, updated_at, due_date, due_time, comment
      FROM tasks WHERE user_id = $1 ORDER BY created_at DESC`,
     [userId]
   );
   return result.rows;
 };
 
-const createTask = async (userId, text, category = null, dueDate = null, dueTime = null) => {
+const createTask = async (userId, text, category = null, dueDate = null, dueTime = null, comment = null) => {
   const result = await pool.query(
-    'INSERT INTO tasks (user_id, text, category, due_date, due_time) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-    [userId, text, category, dueDate, dueTime]
+    'INSERT INTO tasks (user_id, text, category, due_date, due_time, comment) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+    [userId, text, category, dueDate, dueTime, comment]
   );
   return result.rows[0];
 };
 
 const updateTask = async (taskId, userId, updates) => {
-  const { text, completed, category, dueDate, dueTime } = updates;
+  const { text, completed, category, dueDate, dueTime, comment } = updates;
 
-  console.log('database-pg.js updateTask called with:', { taskId, userId, text, completed, category, dueDate, dueTime });
+  console.log('database-pg.js updateTask called with:', { taskId, userId, text, completed, category, dueDate, dueTime, comment });
 
   const fields = [];
   const values = [];
@@ -204,6 +218,10 @@ const updateTask = async (taskId, userId, updates) => {
   if (dueTime !== undefined) {
     fields.push(`due_time = $${paramCount++}`);
     values.push(dueTime);
+  }
+  if (comment !== undefined) {
+    fields.push(`comment = $${paramCount++}`);
+    values.push(comment);
   }
 
   fields.push(`updated_at = CURRENT_TIMESTAMP`);
