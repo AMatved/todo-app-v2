@@ -1303,16 +1303,6 @@ function attachTaskListeners(taskElement) {
   if (commentWrapper) {
     commentWrapper.style.cursor = 'pointer';
 
-    // Setup tooltip positioning on hover
-    const tooltip = commentWrapper.querySelector('.comment-tooltip');
-    if (tooltip) {
-      commentWrapper.addEventListener('mouseenter', function() {
-        const rect = commentWrapper.getBoundingClientRect();
-        tooltip.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
-        tooltip.style.left = (rect.left + rect.width / 2) + 'px';
-      });
-    }
-
     commentWrapper.addEventListener('click', async function(e) {
       e.stopPropagation();
       const taskId = parseInt(taskElement.dataset.taskId);
