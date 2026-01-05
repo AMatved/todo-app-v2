@@ -104,6 +104,18 @@ const translations = {
     themeWinter: 'Зима',
     themeSakura: 'Сакура',
     themeBtn: 'Тема',
+    // Layout Builder
+    layoutTabColors: 'Цвета',
+    layoutTabLayout: 'Макет',
+    layoutDescription: 'Перетащите блоки чтобы настроить макет экрана',
+    layoutComponentTasks: 'Задачи',
+    layoutComponentCalendar: 'Календарь',
+    layoutComponentChat: 'AI Помощник',
+    layoutPreview: 'Предпросмотр макета',
+    layoutReset: 'Сбросить',
+    layoutApply: 'Применить макет',
+    layoutError: 'Пожалуйста, добавьте хотя бы один компонент в макет',
+    layoutSuccess: 'Макет успешно применен!',
     // Calendar
     calMon: 'Пн',
     calTue: 'Вт',
@@ -221,6 +233,18 @@ const translations = {
     themeWinter: 'Winter',
     themeSakura: 'Sakura',
     themeBtn: 'Theme',
+    // Layout Builder
+    layoutTabColors: 'Colors',
+    layoutTabLayout: 'Layout',
+    layoutDescription: 'Drag blocks to customize screen layout',
+    layoutComponentTasks: 'Tasks',
+    layoutComponentCalendar: 'Calendar',
+    layoutComponentChat: 'AI Assistant',
+    layoutPreview: 'Layout Preview',
+    layoutReset: 'Reset',
+    layoutApply: 'Apply Layout',
+    layoutError: 'Please add at least one component to the layout',
+    layoutSuccess: 'Layout applied successfully!',
     // Calendar
     calMon: 'Mon',
     calTue: 'Tue',
@@ -392,6 +416,41 @@ function updateUILanguage() {
   const themeBtn = document.getElementById('theme-btn');
   if (themeBtn) {
     themeBtn.title = t('themeBtn');
+  }
+
+  // Update layout builder tabs
+  const themeTabs = document.querySelectorAll('.theme-tab');
+  if (themeTabs.length >= 2) {
+    themeTabs[0].textContent = `🎨 ${t('layoutTabColors')}`;
+    themeTabs[1].textContent = `📐 ${t('layoutTabLayout')}`;
+  }
+
+  // Update layout builder texts
+  const layoutDescription = document.querySelector('.layout-description');
+  if (layoutDescription) {
+    layoutDescription.textContent = t('layoutDescription');
+  }
+
+  const componentNames = document.querySelectorAll('.component-name');
+  componentNames.forEach((nameEl, index) => {
+    if (index === 0) nameEl.textContent = t('layoutComponentTasks');
+    if (index === 1) nameEl.textContent = t('layoutComponentCalendar');
+    if (index === 2) nameEl.textContent = t('layoutComponentChat');
+  });
+
+  const previewHeader = document.querySelector('.preview-header span');
+  if (previewHeader) {
+    previewHeader.textContent = t('layoutPreview');
+  }
+
+  const resetLayoutBtn = document.getElementById('reset-layout');
+  if (resetLayoutBtn) {
+    resetLayoutBtn.textContent = t('layoutReset');
+  }
+
+  const applyLayoutBtn = document.getElementById('apply-layout');
+  if (applyLayoutBtn) {
+    applyLayoutBtn.textContent = t('layoutApply');
   }
 
   // Update calendar weekdays
@@ -2420,9 +2479,67 @@ document.addEventListener("DOMContentLoaded", async function() {
     const previewItem = document.createElement('div');
     previewItem.className = 'preview-item';
     previewItem.dataset.component = component;
-    previewItem.dataset.label = component;
+
+    // Add icon and text based on component
+    let icon = '';
+    let text = '';
+    if (component === 'tasks') {
+      icon = '📋';
+      text = t('layoutComponentTasks');
+    } else if (component === 'calendar') {
+      icon = '📅';
+      text = t('layoutComponentCalendar');
+    } else if (component === 'chat') {
+      icon = '🤖';
+      text = t('layoutComponentChat');
+    }
+
+    // Create content span
+    const contentSpan = document.createElement('span');
+    contentSpan.textContent = `${icon} ${text}`;
+    contentSpan.style.flex = '1';
+    contentSpan.style.fontWeight = '600';
+    contentSpan.style.color = 'var(--text-primary)';
+    previewItem.appendChild(contentSpan);
+
+    // Remove button (×)
+    const removeBtn = document.createElement('span');
+    removeBtn.textContent = '×';
+    removeBtn.style.cssText = `
+      font-size: 20px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    `;
+
+    removeBtn.addEventListener('mouseenter', function() {
+      this.style.background = 'var(--bg-tertiary)';
+      this.style.color = 'var(--text-primary)';
+    });
+
+    removeBtn.addEventListener('mouseleave', function() {
+      this.style.background = '';
+      this.style.color = 'var(--text-secondary)';
+    });
 
     // Remove on click
+    removeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const comp = previewItem.dataset.component;
+      currentLayout = currentLayout.filter(c => c !== comp);
+      previewItem.remove();
+      saveLayout();
+    });
+
+    previewItem.appendChild(removeBtn);
+
+    // Remove on click (also on item itself)
     previewItem.addEventListener('click', function() {
       const comp = this.dataset.component;
       currentLayout = currentLayout.filter(c => c !== comp);
@@ -2483,7 +2600,7 @@ document.addEventListener("DOMContentLoaded", async function() {
   if (applyLayoutBtn) {
     applyLayoutBtn.addEventListener('click', function() {
       if (currentLayout.length === 0) {
-        alert('Пожалуйста, добавьте хотя бы один компонент в макет');
+        alert(t('layoutError'));
         return;
       }
 
@@ -2494,7 +2611,7 @@ document.addEventListener("DOMContentLoaded", async function() {
       closeThemeModal();
 
       // Show success message
-      showNotification('Макет успешно применен!');
+      showNotification(t('layoutSuccess'));
     });
   }
 

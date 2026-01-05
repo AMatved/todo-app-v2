@@ -2035,48 +2035,6 @@ body {
   }
 }
 
-.preview-item::before {
-  content: attr(data-label);
-  font-weight: 600;
-  color: var(--text-primary);
-  flex: 1;
-}
-
-.preview-item::after {
-  content: '×';
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 20px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.preview-item::after:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.preview-item[data-component="tasks"]::before {
-  content: '📋 Задачи';
-}
-
-.preview-item[data-component="calendar"]::before {
-  content: '📅 Календарь';
-}
-
-.preview-item[data-component="chat"]::before {
-  content: '🤖 AI Помощник';
-}
-
 /* Layout Actions */
 .layout-actions {
   display: flex;
