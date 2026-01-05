@@ -1328,6 +1328,86 @@ function attachTaskListeners(taskElement) {
       }
     });
   }
+
+  // Timestamp click handler - edit date/time
+  const timestamp = taskElement.querySelector('.task-timestamp');
+  if (timestamp) {
+    timestamp.style.cursor = 'pointer';
+    timestamp.addEventListener('click', async function(e) {
+      e.stopPropagation();
+      const taskId = parseInt(taskElement.dataset.taskId);
+      const task = allTasks.find(t => t.id === taskId);
+
+      if (!task) return;
+
+      // Create a temporary modal for date/time editing
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h3>Изменить дату и время</h3>
+          <div class="datetime-edit-form">
+            <label>
+              Дата:
+              <input type="date" id="edit-date" value="${task.due_date || ''}">
+            </label>
+            <label>
+              Время:
+              <input type="time" id="edit-time" value="${task.due_time || ''}">
+            </label>
+          </div>
+          <div class="modal-buttons">
+            <button id="save-datetime" class="btn-primary">Сохранить</button>
+            <button id="cancel-datetime" class="btn-secondary">Отмена</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      const saveBtn = modal.querySelector('#save-datetime');
+      const cancelBtn = modal.querySelector('#cancel-datetime');
+      const dateInput = modal.querySelector('#edit-date');
+      const timeInput = modal.querySelector('#edit-time');
+
+      cancelBtn.addEventListener('click', () => {
+        modal.remove();
+      });
+
+      saveBtn.addEventListener('click', async () => {
+        const newDate = dateInput.value;
+        const newTime = timeInput.value;
+
+        if (!newDate) {
+          showNotification('Пожалуйста, выберите дату', 'error');
+          return;
+        }
+
+        try {
+          await updateTaskOnServer(taskId, {
+            due_date: newDate,
+            due_time: newTime || null
+          });
+
+          // Update local task
+          task.due_date = newDate;
+          task.due_time = newTime || null;
+
+          modal.remove();
+          applyFiltersAndSort();
+          showNotification('Дата и время обновлены', 'success');
+        } catch (error) {
+          console.error('Failed to update datetime:', error);
+          showNotification('Ошибка обновления даты и времени', 'error');
+        }
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+        }
+      });
+    });
+  }
 }
 
 async function addTask() {
