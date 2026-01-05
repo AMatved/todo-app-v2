@@ -1576,15 +1576,36 @@ function createDayElement(day, isOtherMonth, isToday, tasksForDay) {
     }
 
     dayElement.appendChild(dotsContainer);
-
-    // Click to filter tasks for this day
-    dayElement.addEventListener('click', function() {
-      selectedDate = new Date(currentCalendarYear, currentCalendarMonth, day);
-      renderCalendar();
-      // Optionally filter tasks for selected date
-      filterTasksByDate(day, currentCalendarMonth, currentCalendarYear);
-    });
   }
+
+  // Click handler for ALL days (not just days with tasks)
+  dayElement.addEventListener('click', function() {
+    // Ignore click if it's other month
+    if (isOtherMonth) return;
+
+    // Update selected date
+    selectedDate = new Date(currentCalendarYear, currentCalendarMonth, day);
+
+    // Format date as YYYY-MM-DD for input
+    const formattedDate = `${currentCalendarYear}-${String(currentCalendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    // Update date input
+    const dueDateInput = document.getElementById('due-date-input');
+    if (dueDateInput) {
+      dueDateInput.value = formattedDate;
+      dueDateInput.classList.add('has-value');
+      dueDateInput.focus();
+
+      // Visual feedback
+      showNotification(`Выбрана дата: ${day}.${currentCalendarMonth + 1}.${currentCalendarYear}`, 'success');
+    }
+
+    // Re-render calendar to show selection
+    renderCalendar();
+
+    // Optionally filter tasks for selected date
+    filterTasksByDate(day, currentCalendarMonth, currentCalendarYear);
+  });
 
   return dayElement;
 }

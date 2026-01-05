@@ -1801,11 +1801,20 @@ body.theme-sakura .btn-primary {
 .calendar-day:hover {
   background: var(--bg-tertiary);
   transform: scale(1.05);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
 }
 
 .calendar-day.other-month {
   color: var(--text-light);
   opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.calendar-day.other-month:hover {
+  transform: none;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .calendar-day.today {
@@ -1822,6 +1831,12 @@ body.theme-sakura .btn-primary {
 .calendar-day.selected {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-light);
+  background: var(--primary-light);
+  font-weight: 700;
+}
+
+.calendar-day.selected .calendar-day-number {
+  color: var(--primary);
 }
 
 .calendar-day-number {
