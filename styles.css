@@ -2216,6 +2216,16 @@ body.theme-sakura .btn-primary {
   gap: 24px;
   align-items: stretch;
   width: 100%;
+  margin-bottom: 24px;
+}
+
+/* Container for calendar and chat side by side */
+.calendar-chat-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+  width: 100%;
 }
 
 .calendar-container {
