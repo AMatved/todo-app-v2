@@ -456,69 +456,91 @@
       <!-- Layout Tab Content -->
       <div class="tab-content" id="layout-tab">
         <div class="layout-section">
-          <p class="layout-description">Перетащите блоки чтобы настроить макет экрана</p>
 
-          <div class="layout-builder" id="layout-builder">
-            <!-- Draggable Components -->
-            <div class="layout-component" data-component="tasks" draggable="true">
-              <div class="component-header">
-                <span class="component-icon">📋</span>
-                <span class="component-name">Задачи</span>
-                <svg class="drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="9" cy="12" r="1"></circle>
-                  <circle cx="9" cy="5" r="1"></circle>
-                  <circle cx="9" cy="19" r="1"></circle>
-                  <circle cx="15" cy="12" r="1"></circle>
-                  <circle cx="15" cy="5" r="1"></circle>
-                  <circle cx="15" cy="19" r="1"></circle>
+          <!-- Quick Layouts -->
+          <div class="quick-layouts-section">
+            <h3 class="section-title">Быстрые макеты</h3>
+            <div class="quick-layouts-grid">
+              <button class="quick-layout-btn" data-layout="default">
+                <div class="quick-layout-preview">
+                  <div class="layout-block tasks-block"></div>
+                  <div class="layout-blocks-row">
+                    <div class="layout-block calendar-block"></div>
+                    <div class="layout-block chat-block"></div>
+                  </div>
+                </div>
+                <span class="quick-layout-name">Стандарт</span>
+              </button>
+
+              <button class="quick-layout-btn" data-layout="tasks-only">
+                <div class="quick-layout-preview">
+                  <div class="layout-block tasks-block"></div>
+                </div>
+                <span class="quick-layout-name">Только задачи</span>
+              </button>
+
+              <button class="quick-layout-btn" data-layout="calendar-chat">
+                <div class="quick-layout-preview">
+                  <div class="layout-blocks-row">
+                    <div class="layout-block calendar-block"></div>
+                    <div class="layout-block chat-block"></div>
+                  </div>
+                </div>
+                <span class="quick-layout-name">Без задач</span>
+              </button>
+
+              <button class="quick-layout-btn" data-layout="all-vertical">
+                <div class="quick-layout-preview">
+                  <div class="layout-block tasks-block"></div>
+                  <div class="layout-block calendar-block"></div>
+                  <div class="layout-block chat-block"></div>
+                </div>
+                <span class="quick-layout-name">Вертикаль</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Layout -->
+          <div class="custom-layout-section">
+            <div class="custom-layout-header">
+              <h3 class="section-title">Порядок блоков</h3>
+              <button id="reset-layout" class="btn-small btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                  <path d="M3 3v5h5"></path>
                 </svg>
-              </div>
+                Сбросить
+              </button>
             </div>
 
-            <div class="layout-component" data-component="calendar" draggable="true">
-              <div class="component-header">
-                <span class="component-icon">📅</span>
-                <span class="component-name">Календарь</span>
-                <svg class="drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="9" cy="12" r="1"></circle>
-                  <circle cx="9" cy="5" r="1"></circle>
-                  <circle cx="9" cy="19" r="1"></circle>
-                  <circle cx="15" cy="12" r="1"></circle>
-                  <circle cx="15" cy="5" r="1"></circle>
-                  <circle cx="15" cy="19" r="1"></circle>
-                </svg>
-              </div>
-            </div>
+            <!-- Phone Preview -->
+            <div class="phone-preview">
+              <div class="phone-frame">
+                <div class="phone-screen">
+                  <!-- Mini Header -->
+                  <div class="phone-header">
+                    <span class="phone-logo">🌸</span>
+                    <span class="phone-title">Todo App</span>
+                  </div>
 
-            <div class="layout-component" data-component="chat" draggable="true">
-              <div class="component-header">
-                <span class="component-icon">🤖</span>
-                <span class="component-name">AI Помощник</span>
-                <svg class="drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="9" cy="12" r="1"></circle>
-                  <circle cx="9" cy="5" r="1"></circle>
-                  <circle cx="9" cy="19" r="1"></circle>
-                  <circle cx="15" cy="12" r="1"></circle>
-                  <circle cx="15" cy="5" r="1"></circle>
-                  <circle cx="15" cy="19" r="1"></circle>
-                </svg>
+                  <!-- Draggable Blocks List -->
+                  <div class="phone-blocks" id="phone-blocks">
+                    <!-- Blocks will be rendered here by JavaScript -->
+                  </div>
+
+                  <!-- Instructions -->
+                  <div class="phone-instructions">
+                    <span class="instructions-icon">💡</span>
+                    <p class="instructions-text">Перетащите блоки для изменения порядка</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Layout Preview Area -->
-          <div class="layout-preview">
-            <div class="preview-header">
-              <span>Предпросмотр макета</span>
-              <button id="reset-layout" class="btn-small btn-secondary">Сбросить</button>
-            </div>
-            <div class="preview-canvas" id="preview-canvas">
-              <!-- Dropped items will appear here -->
-            </div>
-          </div>
-
+          <!-- Apply Button -->
           <div class="layout-actions">
-            <button id="apply-layout" class="btn btn-primary">Применить макет</button>
+            <button id="apply-layout" class="btn btn-primary btn-large">Применить макет</button>
           </div>
         </div>
       </div>

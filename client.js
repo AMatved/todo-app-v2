@@ -2448,10 +2448,140 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
   });
 
-  // Drag and Drop functionality
-  const layoutComponents = document.querySelectorAll('.layout-component');
-  const previewCanvas = document.getElementById('preview-canvas');
-  let currentLayout = [];
+  // ==================== NEW LAYOUT BUILDER ====================
+
+  const blockInfo = {
+    tasks: { name: 'Задачи', nameEn: 'Tasks', icon: '📋', color: '#22c55e' },
+    calendar: { name: 'Календарь', nameEn: 'Calendar', icon: '📅', color: '#3b82f6' },
+    chat: { name: 'AI Помощник', nameEn: 'AI Assistant', icon: '🤖', color: '#eab308' }
+  };
+
+  let currentLayout = ['tasks', 'calendar', 'chat'];
+  let draggedIndex = null;
+
+  // Quick layouts
+  const quickLayouts = {
+    'default': ['tasks', 'calendar', 'chat'],
+    'tasks-only': ['tasks'],
+    'calendar-chat': ['calendar', 'chat'],
+    'all-vertical': ['tasks', 'calendar', 'chat']
+  };
+
+  // Render phone blocks
+  function renderPhoneBlocks() {
+    const phoneBlocks = document.getElementById('phone-blocks');
+    if (!phoneBlocks) return;
+
+    phoneBlocks.innerHTML = '';
+
+    currentLayout.forEach((blockName, index) => {
+      const block = blockInfo[blockName];
+      if (!block) return;
+
+      const blockItem = document.createElement('div');
+      blockItem.className = 'phone-block-item';
+      blockItem.draggable = true;
+      blockItem.dataset.index = index;
+      blockItem.dataset.block = blockName;
+
+      blockItem.innerHTML = `
+        <div class="phone-block-content">
+          <span class="phone-block-icon">${block.icon}</span>
+          <div class="phone-block-info">
+            <div class="phone-block-name">${currentLang === 'ru' ? block.name : block.nameEn}</div>
+            <div class="phone-block-position">Позиция ${index + 1}</div>
+          </div>
+          <button class="phone-block-remove" data-index="${index}">×</button>
+        </div>
+      `;
+
+      // Drag events
+      blockItem.addEventListener('dragstart', (e) => {
+        draggedIndex = index;
+        blockItem.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      blockItem.addEventListener('dragend', () => {
+        draggedIndex = null;
+        blockItem.classList.remove('dragging');
+        document.querySelectorAll('.phone-block-item').forEach(item => {
+          item.classList.remove('drag-over');
+        });
+      });
+
+      blockItem.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (draggedIndex !== null && draggedIndex !== index) {
+          blockItem.classList.add('drag-over');
+        }
+      });
+
+      blockItem.addEventListener('dragleave', () => {
+        blockItem.classList.remove('drag-over');
+      });
+
+      blockItem.addEventListener('drop', (e) => {
+        e.preventDefault();
+        blockItem.classList.remove('drag-over');
+
+        if (draggedIndex === null || draggedIndex === index) return;
+
+        // Reorder array
+        const newLayout = [...currentLayout];
+        const [removed] = newLayout.splice(draggedIndex, 1);
+        newLayout.splice(index, 0, removed);
+
+        currentLayout = newLayout;
+        renderPhoneBlocks();
+        saveLayout();
+      });
+
+      // Remove button
+      const removeBtn = blockItem.querySelector('.phone-block-remove');
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        currentLayout.splice(index, 1);
+        renderPhoneBlocks();
+        saveLayout();
+      });
+
+      phoneBlocks.appendChild(blockItem);
+    });
+  }
+
+  // Quick layout buttons
+  document.querySelectorAll('.quick-layout-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const layoutType = this.dataset.layout;
+      if (quickLayouts[layoutType]) {
+        currentLayout = [...quickLayouts[layoutType]];
+        renderPhoneBlocks();
+        saveLayout();
+
+        // Update active state
+        document.querySelectorAll('.quick-layout-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      }
+    });
+  });
+
+  // Reset layout
+  const resetLayoutBtn = document.getElementById('reset-layout');
+  if (resetLayoutBtn) {
+    resetLayoutBtn.addEventListener('click', function() {
+      currentLayout = ['tasks', 'calendar', 'chat'];
+      renderPhoneBlocks();
+      saveLayout();
+      document.querySelectorAll('.quick-layout-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.quick-layout-btn[data-layout="default"]').classList.add('active');
+    });
+  }
+
+  // Save layout
+  function saveLayout() {
+    localStorage.setItem('customLayout', JSON.stringify(currentLayout));
+  }
 
   // Load saved layout
   function loadSavedLayout() {
@@ -2459,145 +2589,12 @@ document.addEventListener("DOMContentLoaded", async function() {
     if (savedLayout) {
       try {
         currentLayout = JSON.parse(savedLayout);
-        currentLayout.forEach(component => {
-          addPreviewItem(component);
-        });
       } catch (e) {
         console.error('Error loading layout:', e);
-        currentLayout = [];
+        currentLayout = ['tasks', 'calendar', 'chat'];
       }
     }
-  }
-
-  // Save layout to localStorage
-  function saveLayout() {
-    localStorage.setItem('customLayout', JSON.stringify(currentLayout));
-  }
-
-  // Add item to preview
-  function addPreviewItem(component) {
-    // Check if already exists
-    if (currentLayout.includes(component)) return;
-
-    currentLayout.push(component);
-
-    const previewItem = document.createElement('div');
-    previewItem.className = 'preview-item';
-    previewItem.dataset.component = component;
-
-    // Add icon and text based on component
-    let icon = '';
-    let text = '';
-    if (component === 'tasks') {
-      icon = '📋';
-      text = t('layoutComponentTasks');
-    } else if (component === 'calendar') {
-      icon = '📅';
-      text = t('layoutComponentCalendar');
-    } else if (component === 'chat') {
-      icon = '🤖';
-      text = t('layoutComponentChat');
-    }
-
-    // Create content span
-    const contentSpan = document.createElement('span');
-    contentSpan.textContent = `${icon} ${text}`;
-    contentSpan.style.flex = '1';
-    contentSpan.style.fontWeight = '600';
-    contentSpan.style.color = 'var(--text-primary)';
-    previewItem.appendChild(contentSpan);
-
-    // Remove button (×)
-    const removeBtn = document.createElement('span');
-    removeBtn.textContent = '×';
-    removeBtn.style.cssText = `
-      font-size: 20px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-      transition: all 0.2s ease;
-    `;
-
-    removeBtn.addEventListener('mouseenter', function() {
-      this.style.background = 'var(--bg-tertiary)';
-      this.style.color = 'var(--text-primary)';
-    });
-
-    removeBtn.addEventListener('mouseleave', function() {
-      this.style.background = '';
-      this.style.color = 'var(--text-secondary)';
-    });
-
-    // Remove on click
-    removeBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const comp = previewItem.dataset.component;
-      currentLayout = currentLayout.filter(c => c !== comp);
-      previewItem.remove();
-      saveLayout();
-    });
-
-    previewItem.appendChild(removeBtn);
-
-    // Remove on click (also on item itself)
-    previewItem.addEventListener('click', function() {
-      const comp = this.dataset.component;
-      currentLayout = currentLayout.filter(c => c !== comp);
-      this.remove();
-      saveLayout();
-    });
-
-    previewCanvas.appendChild(previewItem);
-    saveLayout();
-  }
-
-  // Drag events for components
-  layoutComponents.forEach(component => {
-    component.addEventListener('dragstart', function(e) {
-      this.classList.add('dragging');
-      e.dataTransfer.setData('text/plain', this.dataset.component);
-      e.dataTransfer.effectAllowed = 'move';
-    });
-
-    component.addEventListener('dragend', function() {
-      this.classList.remove('dragging');
-    });
-  });
-
-  // Drop zone events
-  previewCanvas.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    this.classList.add('drag-over');
-  });
-
-  previewCanvas.addEventListener('dragleave', function() {
-    this.classList.remove('drag-over');
-  });
-
-  previewCanvas.addEventListener('drop', function(e) {
-    e.preventDefault();
-    this.classList.remove('drag-over');
-
-    const component = e.dataTransfer.getData('text/plain');
-    if (component) {
-      addPreviewItem(component);
-    }
-  });
-
-  // Reset layout button
-  const resetLayoutBtn = document.getElementById('reset-layout');
-  if (resetLayoutBtn) {
-    resetLayoutBtn.addEventListener('click', function() {
-      currentLayout = [];
-      previewCanvas.innerHTML = '';
-      localStorage.removeItem('customLayout');
-    });
+    renderPhoneBlocks();
   }
 
   // Apply layout button
@@ -2609,13 +2606,8 @@ document.addEventListener("DOMContentLoaded", async function() {
         return;
       }
 
-      // Apply custom layout
       applyCustomLayout(currentLayout);
-
-      // Close modal
       closeThemeModal();
-
-      // Show success message
       showNotification(t('layoutSuccess'));
     });
   }
@@ -2623,63 +2615,114 @@ document.addEventListener("DOMContentLoaded", async function() {
   // Apply custom layout to page
   function applyCustomLayout(layout) {
     const contentWrapper = document.querySelector('.content-wrapper');
-    let calendarChatWrapper = document.querySelector('.calendar-chat-wrapper');
-    const calendarContainer = document.querySelector('.calendar-container');
-    const chatContainer = document.querySelector('.chat-container');
     const mainContent = document.querySelector('.main-content');
+    if (!contentWrapper || !mainContent) return;
 
-    if (!contentWrapper) return;
-
-    // Reset to default structure first
+    // Reset structure
     const existingCalendarChatWrapper = document.querySelector('.calendar-chat-wrapper');
     if (existingCalendarChatWrapper) {
       existingCalendarChatWrapper.remove();
     }
 
-    // Create new layout based on user selection
-    if (layout.includes('tasks')) {
-      // Tasks are always in content-wrapper
-    }
+    const calendarContainer = document.querySelector('.calendar-container');
+    const chatContainer = document.querySelector('.chat-container');
 
     // Reset displays
     if (calendarContainer) calendarContainer.style.display = '';
     if (chatContainer) chatContainer.style.display = '';
 
-    if (layout.includes('calendar') && layout.includes('chat')) {
-      // Both calendar and chat side by side
-      calendarChatWrapper = document.createElement('div');
-      calendarChatWrapper.className = 'calendar-chat-wrapper';
+    // Apply layout based on order
+    if (layout.length === 3 && layout.includes('tasks') && layout.includes('calendar') && layout.includes('chat')) {
+      // Default: tasks + (calendar + chat side by side)
+      if (layout[0] === 'tasks') {
+        // Tasks first, then calendar and chat side by side
+        const calendarChatWrapper = document.createElement('div');
+        calendarChatWrapper.className = 'calendar-chat-wrapper';
 
-      if (calendarContainer) {
-        contentWrapper.after(calendarChatWrapper);
-        calendarChatWrapper.appendChild(calendarContainer);
+        if (calendarContainer && chatContainer) {
+          contentWrapper.after(calendarChatWrapper);
+          calendarChatWrapper.appendChild(calendarContainer);
+          calendarChatWrapper.appendChild(chatContainer);
+        }
+      } else {
+        // Custom order - all vertical
+        layout.forEach(blockName => {
+          if (blockName === 'tasks') {
+            // Tasks stay in content-wrapper
+          } else if (blockName === 'calendar' && calendarContainer) {
+            contentWrapper.after(calendarContainer);
+          } else if (blockName === 'chat' && chatContainer) {
+            if (calendarContainer) {
+              calendarContainer.after(chatContainer);
+            } else {
+              contentWrapper.after(chatContainer);
+            }
+          }
+        });
       }
-      if (chatContainer) {
-        calendarChatWrapper.appendChild(chatContainer);
+    } else if (layout.length === 2) {
+      // Two blocks
+      const firstBlock = layout[0];
+      const secondBlock = layout[1];
+
+      if ((firstBlock === 'calendar' && secondBlock === 'chat') ||
+          (firstBlock === 'chat' && secondBlock === 'calendar')) {
+        // Calendar and chat side by side
+        const calendarChatWrapper = document.createElement('div');
+        calendarChatWrapper.className = 'calendar-chat-wrapper';
+
+        if (calendarContainer) {
+          contentWrapper.after(calendarChatWrapper);
+          calendarChatWrapper.appendChild(calendarContainer);
+        }
+        if (chatContainer) {
+          calendarChatWrapper.appendChild(chatContainer);
+        }
+
+        // Swap if needed
+        if (firstBlock === 'chat' && calendarContainer && chatContainer) {
+          calendarChatWrapper.insertBefore(chatContainer, calendarContainer);
+        }
+      } else {
+        // Vertical layout
+        layout.forEach(blockName => {
+          if (blockName === 'tasks') {
+            // Tasks stay in content-wrapper
+          } else if (blockName === 'calendar' && calendarContainer) {
+            contentWrapper.after(calendarContainer);
+          } else if (blockName === 'chat' && chatContainer) {
+            if (calendarContainer) {
+              calendarContainer.after(chatContainer);
+            } else {
+              contentWrapper.after(chatContainer);
+            }
+          }
+        });
       }
-    } else if (layout.includes('calendar')) {
-      // Only calendar
-      if (calendarContainer) {
-        contentWrapper.after(calendarContainer);
-      }
-      if (chatContainer) {
-        chatContainer.style.display = 'none';
-      }
-    } else if (layout.includes('chat')) {
-      // Only chat
-      if (chatContainer) {
-        contentWrapper.after(chatContainer);
-      }
-      if (calendarContainer) {
-        calendarContainer.style.display = 'none';
+    } else if (layout.length === 1) {
+      // Only one block
+      const blockName = layout[0];
+
+      if (blockName === 'tasks') {
+        if (calendarContainer) calendarContainer.style.display = 'none';
+        if (chatContainer) chatContainer.style.display = 'none';
+      } else if (blockName === 'calendar') {
+        if (calendarContainer) {
+          contentWrapper.after(calendarContainer);
+        }
+        if (chatContainer) chatContainer.style.display = 'none';
+      } else if (blockName === 'chat') {
+        if (chatContainer) {
+          contentWrapper.after(chatContainer);
+        }
+        if (calendarContainer) calendarContainer.style.display = 'none';
       }
     }
   }
 
   // Load and apply saved layout on page load
   loadSavedLayout();
-  if (currentLayout.length > 0) {
-    // Apply saved layout after DOM is fully loaded
+  if (currentLayout.length > 0 && localStorage.getItem('customLayout')) {
     setTimeout(() => {
       applyCustomLayout(currentLayout);
     }, 100);
