@@ -917,6 +917,22 @@ function displayTasks(tasks) {
 
       listContainer.appendChild(li);
       attachTaskListeners(li);
+
+      // Setup comment tooltip positioning
+      const commentWrapper = li.querySelector('.task-comment-wrapper');
+      if (commentWrapper) {
+        const commentBtn = commentWrapper.querySelector('.comment-btn');
+        const tooltip = commentWrapper.querySelector('.comment-tooltip');
+
+        if (commentBtn && tooltip) {
+          commentBtn.addEventListener('mouseenter', function() {
+            const rect = commentBtn.getBoundingClientRect();
+            tooltip.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+            tooltip.style.left = rect.left + (rect.width / 2) + 'px';
+            tooltip.style.transform = 'translateX(-50%)';
+          });
+        }
+      }
     });
   }
   updateCounters();

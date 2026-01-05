@@ -1108,10 +1108,7 @@ body {
 }
 
 .comment-tooltip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed; /* Changed from absolute to fixed */
   background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1124,7 +1121,7 @@ body {
   box-shadow: 0 4px 12px var(--shadow);
   white-space: normal;
   word-wrap: break-word;
-  z-index: 1000;
+  z-index: 99999; /* Much higher z-index */
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
@@ -1134,7 +1131,7 @@ body {
 .comment-tooltip::after {
   content: '';
   position: absolute;
-  top: 100%;
+  bottom: -6px; /* Triangle at bottom pointing down */
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
