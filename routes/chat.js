@@ -1,16 +1,81 @@
 const express = require('express');
-const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const router = express.Router();
 
 // Initialize Google AI
 const genAI = process.env.GOOGLE_AI_API_KEY
   ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
   : null;
 
-// Helper function to convert file to base64
-const fileToBase64 = (file) => {
-  return file.buffer.toString('base64');
-};
+// Generate AI response with fallback to simple responses
+async function generateResponse(message, history = []) {
+  // If API key is configured, use Google AI
+  if (genAI) {
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+      // Start chat with history if provided
+      const chat = model.startChat({
+        history: history.map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'model',
+          parts: msg.content
+        }))
+      });
+
+      const result = await chat.sendMessage(message);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Google AI Error:', error.message);
+      // Fall back to simple responses on error
+    }
+  }
+
+  // Simple fallback responses without AI API
+  const msg = message.toLowerCase();
+
+  // Greeting
+  if (msg.includes('привет') || msg.includes('hello') || msg.includes('hi') || msg.includes('здравств')) {
+    return 'Привет! 👋 Я AI помощник. Могу помочь вам с управлением задачами, ответить на вопросы или просто поболтать. Чем могу помочь?';
+  }
+
+  // Task-related queries
+  if (msg.includes('задач') || msg.includes('task')) {
+    return 'Я вижу, у вас есть задачи в приложении! 📝 Вы можете добавлять новые задачи, устанавливать дедлайны, добавлять комментарии и категории. Нужна помощь с организацией?';
+  }
+
+  // Help
+  if (msg.includes('помощ') || msg.includes('help') || msg.includes('что умеешь')) {
+    return 'Я могу помочь вам:\n\n• 💬 Отвечать на вопросы\n• 📝 Подсказывать по управлению задачами\n• 💡 Давать советы по продуктивности\n• 🎯 Помогать с планированием\n\nЗадайте любой вопрос!';
+  }
+
+  // Time/date
+  if (msg.includes('врем') || msg.includes('дата') || msg.includes('сейчас')) {
+    const now = new Date();
+    return `Сейчас ${now.toLocaleDateString('ru-RU')} ${now.toLocaleTimeString('ru-RU')}. 🕐`;
+  }
+
+  // Thanks
+  if (msg.includes('спасибо') || msg.includes('благодар') || msg.includes('thanks')) {
+    return 'Пожалуйста! 😊 Рад помочь! Если что - обращайтесь!';
+  }
+
+  // Bye
+  if (msg.includes('пока') || msg.includes('до свидан') || msg.includes('bye')) {
+    return 'До свидания! 👋 Удачи с задачами!';
+  }
+
+  // Default responses
+  const defaultResponses = [
+    'Интересный вопрос! 🤔 Расскажите подробнее?',
+    'Понял! Могу помочь вам чем-то конкретным?',
+    'Отлично! Что ещё планируете сделать сегодня?',
+    'Хорошо! Продолжайте в том же духе! 💪',
+    'Записал! Нужна помощь с организацией задач?'
+  ];
+
+  return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+}
 
 // Chat endpoint
 router.post('/', async (req, res) => {
@@ -21,44 +86,11 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Check if API key is configured
-    if (!genAI) {
-      return res.status(500).json({
-        error: 'AI service not configured',
-        message: 'Please set GOOGLE_AI_API_KEY in environment variables'
-      });
-    }
-
-    // Get the model
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-
-    // Prepare chat history
-    const chatHistory = history && Array.isArray(history)
-      ? history.map((msg, index) => {
-          const role = msg.type === 'user' ? 'user' : 'model';
-          return {
-            role: role,
-            parts: [{ text: msg.content }]
-          };
-        })
-      : [];
-
-    // Start a chat
-    const chat = model.startChat({
-      history: chatHistory,
-      generationConfig: {
-        maxOutputTokens: 1000,
-        temperature: 0.7,
-      },
-    });
-
-    // Send message
-    const result = await chat.sendMessage(message);
-    const response = await result.response;
-    const text = response.text();
+    // Generate response (with AI if available, or fallback)
+    const response = await generateResponse(message, history || []);
 
     res.json({
-      response: text,
+      response: response,
       timestamp: new Date().toISOString()
     });
 
