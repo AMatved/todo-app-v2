@@ -1444,8 +1444,8 @@ let selectedDate = null;
 
 // Get tasks for a specific date
 function getTasksForDate(day, month, year) {
-  const targetDate = new Date(year, month, day);
-  const targetDateStr = targetDate.toISOString().split('T')[0];
+  // Format date as YYYY-MM-DD using local timezone (not UTC)
+  const targetDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   return allTasks.filter(task => {
     // Use due_date if it exists, otherwise fall back to created_at
@@ -1456,15 +1456,20 @@ function getTasksForDate(day, month, year) {
         // If due_date is ISO string, extract date part
         taskDateStr = task.due_date.includes('T') ? task.due_date.split('T')[0] : task.due_date;
       } else if (task.due_date instanceof Date) {
+        // Convert to ISO string and extract date part
         taskDateStr = task.due_date.toISOString().split('T')[0];
       } else {
         return false;
       }
       return taskDateStr === targetDateStr;
     } else {
+      // Fallback to created_at
       const taskDate = new Date(task.created_at);
-      const taskDateStr = taskDate.toISOString().split('T')[0];
-      return taskDateStr === targetDateStr;
+      // Use local date components to avoid UTC conversion
+      const taskYear = taskDate.getFullYear();
+      const taskMonth = taskDate.getMonth(); // 0-indexed
+      const taskDay = taskDate.getDate();
+      return taskDay === day && taskMonth === month && taskYear === year;
     }
   });
 }
