@@ -103,7 +103,20 @@ const translations = {
     themeAutumn: 'Осень',
     themeWinter: 'Зима',
     themeSakura: 'Сакура',
-    themeBtn: 'Тема'
+    themeBtn: 'Тема',
+    // Calendar
+    calMon: 'Пн',
+    calTue: 'Вт',
+    calWed: 'Ср',
+    calThu: 'Чт',
+    calFri: 'Пт',
+    calSat: 'Сб',
+    calSun: 'Вс',
+    calMonthYear: (month, year) => {
+      const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+      return `${months[month]} ${year}`;
+    }
   },
   en: {
     greeting: 'Hello,',
@@ -204,7 +217,20 @@ const translations = {
     themeAutumn: 'Autumn',
     themeWinter: 'Winter',
     themeSakura: 'Sakura',
-    themeBtn: 'Theme'
+    themeBtn: 'Theme',
+    // Calendar
+    calMon: 'Mon',
+    calTue: 'Tue',
+    calWed: 'Wed',
+    calThu: 'Thu',
+    calFri: 'Fri',
+    calSat: 'Sat',
+    calSun: 'Sun',
+    calMonthYear: (month, year) => {
+      const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+      return `${months[month]} ${year}`;
+    }
   }
 };
 
@@ -360,6 +386,21 @@ function updateUILanguage() {
   const themeBtn = document.getElementById('theme-btn');
   if (themeBtn) {
     themeBtn.title = t('themeBtn');
+  }
+
+  // Update calendar weekdays
+  document.querySelector('.calendar-weekday-mon').textContent = t('calMon');
+  document.querySelector('.calendar-weekday-tue').textContent = t('calTue');
+  document.querySelector('.calendar-weekday-wed').textContent = t('calWed');
+  document.querySelector('.calendar-weekday-thu').textContent = t('calThu');
+  document.querySelector('.calendar-weekday-fri').textContent = t('calFri');
+  document.querySelector('.calendar-weekday-sat').textContent = t('calSat');
+  document.querySelector('.calendar-weekday-sun').textContent = t('calSun');
+
+  // Update calendar month/year
+  if (typeof currentCalendarMonth !== 'undefined' && typeof currentCalendarYear !== 'undefined') {
+    const monthYearText = t('calMonthYear')(currentCalendarMonth, currentCalendarYear);
+    document.getElementById('calendar-month-year').textContent = monthYearText;
   }
 
   // Update guest username if logged in as guest
@@ -641,6 +682,11 @@ function applyFiltersAndSort() {
 
   displayTasks(filtered);
   updateFilterButtons();
+
+  // Update calendar
+  if (typeof renderCalendar === 'function') {
+    renderCalendar();
+  }
 }
 
 function setFilter(filterType) {
@@ -1382,6 +1428,164 @@ function closeThemeModal() {
   }
 }
 
+// ==================== CALENDAR ====================
+
+// Calendar state
+let currentCalendarMonth = new Date().getMonth();
+let currentCalendarYear = new Date().getFullYear();
+let selectedDate = null;
+
+// Get tasks for a specific date
+function getTasksForDate(day, month, year) {
+  const targetDate = new Date(year, month, day);
+  const targetDateStr = targetDate.toISOString().split('T')[0];
+
+  return tasks.filter(task => {
+    const taskDate = new Date(task.created_at);
+    const taskDateStr = taskDate.toISOString().split('T')[0];
+    return taskDateStr === targetDateStr;
+  });
+}
+
+// Render calendar
+function renderCalendar() {
+  const calendarDays = document.getElementById('calendar-days');
+  const monthYearElement = document.getElementById('calendar-month-year');
+
+  // Update month/year title
+  const monthYearText = t('calMonthYear')(currentCalendarMonth, currentCalendarYear);
+  monthYearElement.textContent = monthYearText;
+
+  // Clear previous days
+  calendarDays.innerHTML = '';
+
+  // Get first day of month and total days
+  const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1);
+  const lastDay = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
+  const totalDays = lastDay.getDate();
+  const startingDayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+  // Adjust for Monday-first week (0 = Monday, 6 = Sunday)
+  const adjustedStartingDay = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
+
+  // Get today's date
+  const today = new Date();
+  const todayDay = today.getDate();
+  const todayMonth = today.getMonth();
+  const todayYear = today.getFullYear();
+
+  // Previous month's days
+  const prevMonthLastDay = new Date(currentCalendarYear, currentCalendarMonth, 0).getDate();
+  for (let i = adjustedStartingDay - 1; i >= 0; i--) {
+    const day = prevMonthLastDay - i;
+    const dayElement = createDayElement(day, true, false, null);
+    calendarDays.appendChild(dayElement);
+  }
+
+  // Current month's days
+  for (let day = 1; day <= totalDays; day++) {
+    const isToday = day === todayDay && currentCalendarMonth === todayMonth && currentCalendarYear === todayYear;
+    const tasksForDay = getTasksForDate(day, currentCalendarMonth, currentCalendarYear);
+    const hasTasks = tasksForDay.length > 0;
+
+    const dayElement = createDayElement(day, false, isToday, tasksForDay);
+    calendarDays.appendChild(dayElement);
+  }
+
+  // Next month's days (to fill the grid to 42 cells)
+  const totalCells = adjustedStartingDay + totalDays;
+  const remainingCells = totalCells <= 35 ? 35 - totalCells : 42 - totalCells;
+  for (let day = 1; day <= remainingCells; day++) {
+    const dayElement = createDayElement(day, true, false, null);
+    calendarDays.appendChild(dayElement);
+  }
+}
+
+// Create a single day element
+function createDayElement(day, isOtherMonth, isToday, tasksForDay) {
+  const dayElement = document.createElement('div');
+  dayElement.className = 'calendar-day';
+
+  if (isOtherMonth) {
+    dayElement.classList.add('other-month');
+  }
+
+  if (isToday) {
+    dayElement.classList.add('today');
+  }
+
+  if (tasksForDay && tasksForDay.length > 0) {
+    dayElement.classList.add('has-tasks');
+  }
+
+  if (selectedDate && selectedDate.getDate() === day &&
+      selectedDate.getMonth() === currentCalendarMonth &&
+      selectedDate.getFullYear() === currentCalendarYear && !isOtherMonth) {
+    dayElement.classList.add('selected');
+  }
+
+  // Day number
+  const dayNumber = document.createElement('div');
+  dayNumber.className = 'calendar-day-number';
+  dayNumber.textContent = day;
+  dayElement.appendChild(dayNumber);
+
+  // Task indicator dots
+  if (tasksForDay && tasksForDay.length > 0) {
+    const dotsContainer = document.createElement('div');
+    dotsContainer.className = 'calendar-dots';
+
+    // Show up to 3 dots
+    const maxDots = Math.min(tasksForDay.length, 3);
+    for (let i = 0; i < maxDots; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'calendar-dot';
+      if (tasksForDay[i].completed) {
+        dot.classList.add('completed');
+      }
+      dotsContainer.appendChild(dot);
+    }
+
+    dayElement.appendChild(dotsContainer);
+
+    // Click to filter tasks for this day
+    dayElement.addEventListener('click', function() {
+      selectedDate = new Date(currentCalendarYear, currentCalendarMonth, day);
+      renderCalendar();
+      // Optionally filter tasks for selected date
+      filterTasksByDate(day, currentCalendarMonth, currentCalendarYear);
+    });
+  }
+
+  return dayElement;
+}
+
+// Filter tasks by selected date
+function filterTasksByDate(day, month, year) {
+  // This function can be extended to filter the task list
+  console.log(`Filter tasks for: ${day}/${month}/${year}`);
+}
+
+// Navigate to previous month
+function navigateToPrevMonth() {
+  currentCalendarMonth--;
+  if (currentCalendarMonth < 0) {
+    currentCalendarMonth = 11;
+    currentCalendarYear--;
+  }
+  renderCalendar();
+}
+
+// Navigate to next month
+function navigateToNextMonth() {
+  currentCalendarMonth++;
+  if (currentCalendarMonth > 11) {
+    currentCalendarMonth = 0;
+    currentCalendarYear++;
+  }
+  renderCalendar();
+}
+
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 
 document.addEventListener("DOMContentLoaded", async function() {
@@ -1472,6 +1676,20 @@ document.addEventListener("DOMContentLoaded", async function() {
   if (savedTheme && savedTheme !== 'default') {
     applyTheme(savedTheme);
   }
+
+  // Добавляем listeners для календаря
+  const calendarPrev = document.getElementById('calendar-prev');
+  if (calendarPrev) {
+    calendarPrev.addEventListener('click', navigateToPrevMonth);
+  }
+
+  const calendarNext = document.getElementById('calendar-next');
+  if (calendarNext) {
+    calendarNext.addEventListener('click', navigateToNextMonth);
+  }
+
+  // Инициализация календаря
+  renderCalendar();
 
   // Добавляем listener для переключения видимости задач
   const toggleTasksBtn = document.getElementById('toggle-tasks-btn');
