@@ -861,6 +861,16 @@ function selectTaskCategory(category) {
     finance: '💰'
   };
 
+  // For image support: add URLs here to use images instead of emoji
+  const categoryIconImages = {
+    work: '/icons/work.png',
+    study: '/icons/study.png',
+    health: '/icons/health.png',
+    home: '/icons/home.png',
+    development: '/icons/development.png',
+    finance: '/icons/finance.png'
+  };
+
   const categoryNames = {
     work: t('categoryWork'),
     study: t('categoryStudy'),
@@ -875,6 +885,7 @@ function selectTaskCategory(category) {
     selectedTaskCategory = null;
     categorySelectorBtn.classList.remove('has-category');
     categorySelectorIcon.textContent = '📋';
+    categorySelectorIcon.style.backgroundImage = '';
     categorySelectorLabel.textContent = t('categoryLabel');
   } else {
     // Select new category
