@@ -131,7 +131,16 @@ const translations = {
     },
     selectedDate: 'Выбрана дата',
     filterCleared: 'Фильтр снят',
-    filteringFor: 'Задачи на'
+    filteringFor: 'Задачи на',
+    // Chat
+    chatTitle: 'AI Помощник',
+    chatWelcomeGreeting: '👋 Привет! Я AI помощник.',
+    chatWelcomeHelp: 'Могу помочь с:',
+    chatFeature1: '📄 Анализ документов',
+    chatFeature2: '📷 Распознавание текста с фото',
+    chatFeature3: '🎤 Транскрибация аудио',
+    chatFeature4: '💡 Ответы на вопросы',
+    chatInputPlaceholder: 'Напишите сообщение...'
   },
   en: {
     greeting: 'Hello,',
@@ -260,7 +269,16 @@ const translations = {
     },
     selectedDate: 'Selected date',
     filterCleared: 'Filter cleared',
-    filteringFor: 'Tasks for'
+    filteringFor: 'Tasks for',
+    // Chat
+    chatTitle: 'AI Assistant',
+    chatWelcomeGreeting: '👋 Hello! I am an AI assistant.',
+    chatWelcomeHelp: 'I can help you with:',
+    chatFeature1: '📄 Document analysis',
+    chatFeature2: '📷 Text recognition from photos',
+    chatFeature3: '🎤 Audio transcription',
+    chatFeature4: '💡 Answer questions',
+    chatInputPlaceholder: 'Type a message...'
   }
 };
 
@@ -466,6 +484,35 @@ function updateUILanguage() {
   if (typeof currentCalendarMonth !== 'undefined' && typeof currentCalendarYear !== 'undefined') {
     const monthYearText = t('calMonthYear')(currentCalendarMonth, currentCalendarYear);
     document.getElementById('calendar-month-year').textContent = monthYearText;
+  }
+
+  // Update chat elements
+  const chatTitleText = document.getElementById('chat-title-text');
+  if (chatTitleText) {
+    chatTitleText.textContent = t('chatTitle');
+  }
+
+  const chatWelcomeGreeting = document.querySelector('.chat-welcome-greeting');
+  if (chatWelcomeGreeting) {
+    chatWelcomeGreeting.textContent = t('chatWelcomeGreeting');
+  }
+
+  const chatWelcomeHelp = document.querySelector('.chat-welcome-help');
+  if (chatWelcomeHelp) {
+    chatWelcomeHelp.textContent = t('chatWelcomeHelp');
+  }
+
+  const chatFeatures = document.querySelectorAll('.chat-welcome-features li');
+  if (chatFeatures.length >= 4) {
+    chatFeatures[0].textContent = t('chatFeature1');
+    chatFeatures[1].textContent = t('chatFeature2');
+    chatFeatures[2].textContent = t('chatFeature3');
+    chatFeatures[3].textContent = t('chatFeature4');
+  }
+
+  const chatInput = document.getElementById('chat-input');
+  if (chatInput) {
+    chatInput.placeholder = t('chatInputPlaceholder');
   }
 
   // Update guest username if logged in as guest

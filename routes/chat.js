@@ -39,42 +39,42 @@ async function generateResponse(message, history = []) {
 
   // Greeting
   if (msg.includes('привет') || msg.includes('hello') || msg.includes('hi') || msg.includes('здравств')) {
-    return 'Привет! 👋 Я AI помощник. Могу помочь вам с управлением задачами, ответить на вопросы или просто поболтать. Чем могу помочь?';
+    return 'Hello! 👋 I am an AI assistant. I can help you with task management, answer questions, or just chat. How can I help you?';
   }
 
   // Task-related queries
   if (msg.includes('задач') || msg.includes('task')) {
-    return 'Я вижу, у вас есть задачи в приложении! 📝 Вы можете добавлять новые задачи, устанавливать дедлайны, добавлять комментарии и категории. Нужна помощь с организацией?';
+    return 'I see you have tasks in the app! 📝 You can add new tasks, set deadlines, add comments, and organize them with categories. Need help with organization?';
   }
 
   // Help
   if (msg.includes('помощ') || msg.includes('help') || msg.includes('что умеешь')) {
-    return 'Я могу помочь вам:\n\n• 💬 Отвечать на вопросы\n• 📝 Подсказывать по управлению задачами\n• 💡 Давать советы по продуктивности\n• 🎯 Помогать с планированием\n\nЗадайте любой вопрос!';
+    return 'I can help you with:\n\n• 💬 Answer questions\n• 📝 Task management tips\n• 💡 Productivity advice\n• 🎯 Planning assistance\n\nFeel free to ask any question!';
   }
 
   // Time/date
   if (msg.includes('врем') || msg.includes('дата') || msg.includes('сейчас')) {
     const now = new Date();
-    return `Сейчас ${now.toLocaleDateString('ru-RU')} ${now.toLocaleTimeString('ru-RU')}. 🕐`;
+    return `Current time is ${now.toLocaleDateString('en-US')} ${now.toLocaleTimeString('en-US')}. 🕐`;
   }
 
   // Thanks
   if (msg.includes('спасибо') || msg.includes('благодар') || msg.includes('thanks')) {
-    return 'Пожалуйста! 😊 Рад помочь! Если что - обращайтесь!';
+    return 'You\'re welcome! 😊 Happy to help! Let me know if you need anything else!';
   }
 
   // Bye
   if (msg.includes('пока') || msg.includes('до свидан') || msg.includes('bye')) {
-    return 'До свидания! 👋 Удачи с задачами!';
+    return 'Goodbye! 👋 Good luck with your tasks!';
   }
 
   // Default responses
   const defaultResponses = [
-    'Интересный вопрос! 🤔 Расскажите подробнее?',
-    'Понял! Могу помочь вам чем-то конкретным?',
-    'Отлично! Что ещё планируете сделать сегодня?',
-    'Хорошо! Продолжайте в том же духе! 💪',
-    'Записал! Нужна помощь с организацией задач?'
+    'Interesting question! 🤔 Can you tell me more?',
+    'Got it! Can I help you with something specific?',
+    'Great! What else are you planning to do today?',
+    'Sounds good! Keep it up! 💪',
+    'Noted! Need help organizing your tasks?'
   ];
 
   return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
