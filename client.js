@@ -904,16 +904,13 @@ function displayTasks(tasks) {
   updateTodayProgress();
 }
 
-async function saveTask(text, dueDate) {
+async function saveTask(text, dueDate, dueTime) {
   if (isGuest) {
     // Гости - только локально
     addLocalTask(text);
   } else {
     try {
-      const dueTimeInput = document.getElementById('due-time-input');
-      const dueTime = dueTimeInput ? dueTimeInput.value : null;
-
-      console.log('saveTask - dueTime:', dueTime, 'dueTimeInput.value:', dueTimeInput?.value);
+      console.log('saveTask - dueTime:', dueTime);
 
       const requestBody = {
         text,
@@ -1290,6 +1287,7 @@ async function addTask() {
   const dueDateInput = document.getElementById('due-date-input');
   const dueDate = dueDateInput ? dueDateInput.value : null;
   const dueTimeInput = document.getElementById('due-time-input');
+  const dueTime = dueTimeInput ? dueTimeInput.value : null; // Save value BEFORE clearing
 
   if (!task) {
     showNotification(t('errorTaskText'), 'error');
@@ -1311,7 +1309,7 @@ async function addTask() {
   }
 
   try {
-    await saveTask(task, dueDate);
+    await saveTask(task, dueDate, dueTime);
   } catch (error) {
     console.error('Failed to save task:', error);
     showNotification(t('errorTaskCreate'), 'error');
