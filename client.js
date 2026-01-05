@@ -880,23 +880,19 @@ function displayTasks(tasks) {
 
       const categoryIcon = taskData.category ? categoryIcons[taskData.category] : '';
 
-      // Comment icon with tooltip
-      const commentIcon = taskData.comment ? `
-        <div class="task-comment-wrapper">
-          <button class="comment-btn" title="Комментарий">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-          </button>
-          <div class="comment-tooltip">${escapeHtml(taskData.comment)}</div>
+      // Comment display with text preview
+      const commentDisplay = taskData.comment ? `
+        <div class="task-comment-wrapper" title="Нажмите, чтобы изменить комментарий">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="comment-icon">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span class="comment-text">${escapeHtml(taskData.comment.length > 30 ? taskData.comment.substring(0, 30) + '...' : taskData.comment)}</span>
         </div>
       ` : `
-        <div class="task-comment-wrapper">
-          <button class="comment-btn add-comment-btn" title="Добавить комментарий">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-          </button>
+        <div class="task-comment-wrapper add-comment" title="Нажмите, чтобы добавить комментарий">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="comment-icon">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
         </div>
       `;
 
@@ -909,9 +905,9 @@ function displayTasks(tasks) {
         <div class="task-wrapper">
           <span class="task-content">${escapeHtml(taskData.text)}</span>
           ${timestamp ? `<span class="task-timestamp" data-timestamp="${dateToShow}">${timestamp}</span>` : ''}
+          ${commentDisplay}
         </div>
         <div class="task-actions">
-          ${commentIcon}
           <button class="action-btn edit">${t('edit')}</button>
           <button class="action-btn delete">${t('delete')}</button>
         </div>
@@ -919,22 +915,6 @@ function displayTasks(tasks) {
 
       listContainer.appendChild(li);
       attachTaskListeners(li);
-
-      // Setup comment tooltip positioning
-      const commentWrapper = li.querySelector('.task-comment-wrapper');
-      if (commentWrapper) {
-        const commentBtn = commentWrapper.querySelector('.comment-btn');
-        const tooltip = commentWrapper.querySelector('.comment-tooltip');
-
-        if (commentBtn && tooltip) {
-          commentBtn.addEventListener('mouseenter', function() {
-            const rect = commentBtn.getBoundingClientRect();
-            tooltip.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
-            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
-            tooltip.style.transform = 'translateX(-50%)';
-          });
-        }
-      }
     });
   }
   updateCounters();
@@ -1318,10 +1298,12 @@ function attachTaskListeners(taskElement) {
     }
   });
 
-  // Comment button handler
-  const commentBtn = taskElement.querySelector('.comment-btn');
-  if (commentBtn) {
-    commentBtn.addEventListener('click', async function() {
+  // Comment wrapper handler
+  const commentWrapper = taskElement.querySelector('.task-comment-wrapper');
+  if (commentWrapper) {
+    commentWrapper.style.cursor = 'pointer';
+    commentWrapper.addEventListener('click', async function(e) {
+      e.stopPropagation();
       const taskId = parseInt(taskElement.dataset.taskId);
       const task = allTasks.find(t => t.id === taskId);
 
