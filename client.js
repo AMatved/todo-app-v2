@@ -905,9 +905,9 @@ function displayTasks(tasks) {
         <div class="task-wrapper">
           <span class="task-content">${escapeHtml(taskData.text)}</span>
           ${timestamp ? `<span class="task-timestamp" data-timestamp="${dateToShow}">${timestamp}</span>` : ''}
-          ${commentDisplay}
         </div>
         <div class="task-actions">
+          ${commentDisplay}
           <button class="action-btn edit">${t('edit')}</button>
           <button class="action-btn delete">${t('delete')}</button>
         </div>
