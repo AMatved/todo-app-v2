@@ -1801,6 +1801,12 @@ function renderCalendar() {
   const calendarDays = document.getElementById('calendar-days');
   const monthYearElement = document.getElementById('calendar-month-year');
 
+  // Check if calendar exists in DOM
+  if (!calendarDays || !monthYearElement) {
+    console.warn('Calendar elements not found in DOM');
+    return;
+  }
+
   // Update month/year title with filter indicator
   const monthYearText = t('calMonthYear')(currentCalendarMonth, currentCalendarYear);
   if (selectedDateFilter) {
@@ -2614,109 +2620,107 @@ document.addEventListener("DOMContentLoaded", async function() {
 
   // Apply custom layout to page
   function applyCustomLayout(layout) {
-    const contentWrapper = document.querySelector('.content-wrapper');
     const mainContent = document.querySelector('.main-content');
-    if (!contentWrapper || !mainContent) return;
+    if (!mainContent) return;
 
-    // Reset structure
-    const existingCalendarChatWrapper = document.querySelector('.calendar-chat-wrapper');
-    if (existingCalendarChatWrapper) {
-      existingCalendarChatWrapper.remove();
-    }
-
+    const contentWrapper = document.querySelector('.content-wrapper');
     const calendarContainer = document.querySelector('.calendar-container');
     const chatContainer = document.querySelector('.chat-container');
+
+    // Get or create layout container
+    let layoutContainer = document.getElementById('dynamic-layout-container');
+    if (!layoutContainer) {
+      layoutContainer = document.createElement('div');
+      layoutContainer.id = 'dynamic-layout-container';
+      // Insert after content-wrapper if it exists
+      if (contentWrapper) {
+        contentWrapper.after(layoutContainer);
+      } else {
+        mainContent.appendChild(layoutContainer);
+      }
+    }
+
+    // Clear container
+    layoutContainer.innerHTML = '';
+    layoutContainer.className = '';
 
     // Reset displays
     if (calendarContainer) calendarContainer.style.display = '';
     if (chatContainer) chatContainer.style.display = '';
 
-    // Apply layout based on order
-    if (layout.length === 3 && layout.includes('tasks') && layout.includes('calendar') && layout.includes('chat')) {
-      // Default: tasks + (calendar + chat side by side)
-      if (layout[0] === 'tasks') {
-        // Tasks first, then calendar and chat side by side
-        const calendarChatWrapper = document.createElement('div');
-        calendarChatWrapper.className = 'calendar-chat-wrapper';
+    // Build layout based on order
+    const hasTasks = layout.includes('tasks');
+    const hasCalendar = layout.includes('calendar');
+    const hasChat = layout.includes('chat');
 
-        if (calendarContainer && chatContainer) {
-          contentWrapper.after(calendarChatWrapper);
-          calendarChatWrapper.appendChild(calendarContainer);
-          calendarChatWrapper.appendChild(chatContainer);
-        }
-      } else {
-        // Custom order - all vertical
-        layout.forEach(blockName => {
-          if (blockName === 'tasks') {
-            // Tasks stay in content-wrapper
-          } else if (blockName === 'calendar' && calendarContainer) {
-            contentWrapper.after(calendarContainer);
-          } else if (blockName === 'chat' && chatContainer) {
-            if (calendarContainer) {
-              calendarContainer.after(chatContainer);
-            } else {
-              contentWrapper.after(chatContainer);
-            }
-          }
-        });
+    // Special case: tasks + (calendar and chat side by side) in that order
+    if (layout.length === 3 && layout[0] === 'tasks' && layout.includes('calendar') && layout.includes('chat')) {
+      // Tasks stay in content-wrapper
+      // Calendar and chat go side by side
+      const calendarChatWrapper = document.createElement('div');
+      calendarChatWrapper.className = 'calendar-chat-wrapper';
+
+      if (calendarContainer) {
+        calendarChatWrapper.appendChild(calendarContainer);
       }
-    } else if (layout.length === 2) {
-      // Two blocks
-      const firstBlock = layout[0];
-      const secondBlock = layout[1];
-
-      if ((firstBlock === 'calendar' && secondBlock === 'chat') ||
-          (firstBlock === 'chat' && secondBlock === 'calendar')) {
-        // Calendar and chat side by side
-        const calendarChatWrapper = document.createElement('div');
-        calendarChatWrapper.className = 'calendar-chat-wrapper';
-
-        if (calendarContainer) {
-          contentWrapper.after(calendarChatWrapper);
-          calendarChatWrapper.appendChild(calendarContainer);
-        }
-        if (chatContainer) {
-          calendarChatWrapper.appendChild(chatContainer);
-        }
-
-        // Swap if needed
-        if (firstBlock === 'chat' && calendarContainer && chatContainer) {
-          calendarChatWrapper.insertBefore(chatContainer, calendarContainer);
-        }
-      } else {
-        // Vertical layout
-        layout.forEach(blockName => {
-          if (blockName === 'tasks') {
-            // Tasks stay in content-wrapper
-          } else if (blockName === 'calendar' && calendarContainer) {
-            contentWrapper.after(calendarContainer);
-          } else if (blockName === 'chat' && chatContainer) {
-            if (calendarContainer) {
-              calendarContainer.after(chatContainer);
-            } else {
-              contentWrapper.after(chatContainer);
-            }
-          }
-        });
+      if (chatContainer) {
+        calendarChatWrapper.appendChild(chatContainer);
       }
-    } else if (layout.length === 1) {
-      // Only one block
-      const blockName = layout[0];
 
-      if (blockName === 'tasks') {
-        if (calendarContainer) calendarContainer.style.display = 'none';
-        if (chatContainer) chatContainer.style.display = 'none';
-      } else if (blockName === 'calendar') {
-        if (calendarContainer) {
-          contentWrapper.after(calendarContainer);
-        }
-        if (chatContainer) chatContainer.style.display = 'none';
-      } else if (blockName === 'chat') {
-        if (chatContainer) {
-          contentWrapper.after(chatContainer);
-        }
-        if (calendarContainer) calendarContainer.style.display = 'none';
+      // Swap if chat should be first
+      if (layout.indexOf('chat') < layout.indexOf('calendar') && calendarContainer && chatContainer) {
+        calendarChatWrapper.insertBefore(chatContainer, calendarContainer);
       }
+
+      layoutContainer.appendChild(calendarChatWrapper);
+    }
+    // Special case: only calendar and chat side by side
+    else if (layout.length === 2 && hasCalendar && hasChat && !hasTasks) {
+      const calendarChatWrapper = document.createElement('div');
+      calendarChatWrapper.className = 'calendar-chat-wrapper';
+
+      if (calendarContainer) {
+        calendarChatWrapper.appendChild(calendarContainer);
+      }
+      if (chatContainer) {
+        calendarChatWrapper.appendChild(chatContainer);
+      }
+
+      // Swap if chat should be first
+      if (layout[0] === 'chat' && calendarContainer && chatContainer) {
+        calendarChatWrapper.insertBefore(chatContainer, calendarContainer);
+      }
+
+      layoutContainer.appendChild(calendarChatWrapper);
+
+      // Hide tasks if they exist
+      if (contentWrapper) contentWrapper.style.display = 'none';
+    }
+    // Vertical layout - all blocks stacked
+    else {
+      if (hasTasks && contentWrapper) {
+        layoutContainer.appendChild(contentWrapper);
+        contentWrapper.style.display = '';
+      }
+
+      if (hasCalendar && calendarContainer) {
+        layoutContainer.appendChild(calendarContainer);
+      }
+
+      if (hasChat && chatContainer) {
+        layoutContainer.appendChild(chatContainer);
+      }
+    }
+
+    // Hide blocks that are not in layout
+    if (!hasTasks && contentWrapper) {
+      contentWrapper.style.display = 'none';
+    }
+    if (!hasCalendar && calendarContainer) {
+      calendarContainer.style.display = 'none';
+    }
+    if (!hasChat && chatContainer) {
+      chatContainer.style.display = 'none';
     }
   }
 
