@@ -2015,45 +2015,93 @@ async function sendChatMessage() {
 
   // Clear input
   chatInput.value = '';
+
+  // Store file reference before clearing
+  const fileToSend = selectedFile;
   selectedFile = null;
+
+  // Remove file info display
+  const fileInfo = document.querySelector('.chat-file-info');
+  if (fileInfo) {
+    fileInfo.remove();
+  }
 
   // Show loading indicator
   showLoadingIndicator();
 
-  // Simulate AI response (placeholder - replace with actual API call)
-  setTimeout(() => {
-    hideLoadingIndicator();
+  try {
+    let responseData;
 
-    let responseContent = '';
+    if (fileToSend) {
+      // Handle file upload
+      const base64Data = await fileToBase64(fileToSend);
 
-    if (message.toLowerCase().includes('привет') || message.toLowerCase().includes('hello')) {
-      responseContent = 'Привет! Чем могу помочь?';
-    } else if (message.toLowerCase().includes('задач')) {
-      responseContent = `У вас ${allTasks.length} задач. ${allTasks.filter(t => t.completed).length} выполнено, ${allTasks.filter(t => !t.completed).length} осталось.`;
-    } else if (selectedFile) {
-      if (selectedFile.type.startsWith('image/')) {
-        responseContent = 'Я получил изображение! К сожалению, интеграция с AI еще не реализована. Скоро я смогу анализировать фото.';
-      } else if (selectedFile.type === 'application/pdf') {
-        responseContent = 'Я получил PDF файл! К сожалению, интеграция с AI еще не реализована. Скоро я смогу читать документы.';
-      } else if (selectedFile.type.startsWith('audio/')) {
-        responseContent = 'Я получил аудио файл! К сожалению, интеграция с AI еще не реализована. Скоро я смогу транскрибировать аудио.';
-      } else {
-        responseContent = 'Я получил файл! Попробуйте отправить изображение, PDF или аудио.';
-      }
+      const response = await apiRequest('/chat/analyze', {
+        method: 'POST',
+        body: JSON.stringify({
+          message: message,
+          fileData: base64Data,
+          mimeType: fileToSend.type,
+          fileName: fileToSend.name
+        })
+      });
+
+      responseData = response;
     } else {
-      responseContent = 'Я понял ваше сообщение. В данный момент я в режиме разработки, но скоро смогу полноценно отвечать на вопросы и анализировать файлы!';
+      // Handle text message
+      const response = await apiRequest('/chat', {
+        method: 'POST',
+        body: JSON.stringify({
+          message: message,
+          history: chatMessages
+        })
+      });
+
+      responseData = response;
     }
+
+    hideLoadingIndicator();
 
     const assistantMessage = {
       type: 'assistant',
-      content: responseContent,
-      timestamp: new Date().toISOString()
+      content: responseData.response,
+      timestamp: responseData.timestamp || new Date().toISOString()
     };
 
     chatMessages.push(assistantMessage);
     displayMessage(assistantMessage);
     saveChatHistory();
-  }, 1000);
+
+  } catch (error) {
+    hideLoadingIndicator();
+
+    console.error('Chat error:', error);
+
+    // Show error message
+    const errorMessage = {
+      type: 'assistant',
+      content: `Извините, произошла ошибка: ${error.message || 'Не удалось получить ответ от AI'}`,
+      timestamp: new Date().toISOString()
+    };
+
+    chatMessages.push(errorMessage);
+    displayMessage(errorMessage);
+    saveChatHistory();
+  }
+}
+
+// Convert file to base64
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Remove data URL prefix (e.g., "data:image/png;base64,")
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // Display message in chat

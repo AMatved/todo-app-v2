@@ -7,7 +7,10 @@
       "Bash(node:*)",
       "Bash(timeout:*)",
       "Bash(railway status:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(git push:*)",
+      "Bash(railway up:*)",
+      "Bash(railway logs:*)"
     ]
   }
 }
