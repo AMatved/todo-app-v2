@@ -1945,6 +1945,286 @@ function updateTodayProgress() {
   progressText.textContent = `${completedCount}/${totalCount}`;
 }
 
+// ==================== CHAT FUNCTIONS ====================
+
+// Chat state
+let chatMessages = [];
+let selectedFile = null;
+
+// Initialize chat
+function initializeChat() {
+  const chatSendBtn = document.getElementById('chat-send');
+  const chatInput = document.getElementById('chat-input');
+  const chatFileInput = document.getElementById('chat-file-input');
+  const clearChatBtn = document.getElementById('clear-chat');
+
+  if (chatSendBtn) {
+    chatSendBtn.addEventListener('click', sendChatMessage);
+  }
+
+  if (chatInput) {
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+  }
+
+  if (chatFileInput) {
+    chatFileInput.addEventListener('change', handleFileSelect);
+  }
+
+  if (clearChatBtn) {
+    clearChatBtn.addEventListener('click', clearChat);
+  }
+
+  // Load chat history from localStorage
+  loadChatHistory();
+}
+
+// Send chat message
+async function sendChatMessage() {
+  const chatInput = document.getElementById('chat-input');
+  const message = chatInput.value.trim();
+
+  if (!message && !selectedFile) return;
+
+  // Hide welcome message
+  const chatWelcome = document.querySelector('.chat-welcome');
+  if (chatWelcome) {
+    chatWelcome.style.display = 'none';
+  }
+
+  // Create user message
+  const userMessage = {
+    type: 'user',
+    content: message,
+    timestamp: new Date().toISOString(),
+    file: selectedFile ? {
+      name: selectedFile.name,
+      type: selectedFile.type
+    } : null
+  };
+
+  // Add to messages array
+  chatMessages.push(userMessage);
+
+  // Display user message
+  displayMessage(userMessage);
+
+  // Clear input
+  chatInput.value = '';
+  selectedFile = null;
+
+  // Show loading indicator
+  showLoadingIndicator();
+
+  // Simulate AI response (placeholder - replace with actual API call)
+  setTimeout(() => {
+    hideLoadingIndicator();
+
+    let responseContent = '';
+
+    if (message.toLowerCase().includes('привет') || message.toLowerCase().includes('hello')) {
+      responseContent = 'Привет! Чем могу помочь?';
+    } else if (message.toLowerCase().includes('задач')) {
+      responseContent = `У вас ${allTasks.length} задач. ${allTasks.filter(t => t.completed).length} выполнено, ${allTasks.filter(t => !t.completed).length} осталось.`;
+    } else if (selectedFile) {
+      if (selectedFile.type.startsWith('image/')) {
+        responseContent = 'Я получил изображение! К сожалению, интеграция с AI еще не реализована. Скоро я смогу анализировать фото.';
+      } else if (selectedFile.type === 'application/pdf') {
+        responseContent = 'Я получил PDF файл! К сожалению, интеграция с AI еще не реализована. Скоро я смогу читать документы.';
+      } else if (selectedFile.type.startsWith('audio/')) {
+        responseContent = 'Я получил аудио файл! К сожалению, интеграция с AI еще не реализована. Скоро я смогу транскрибировать аудио.';
+      } else {
+        responseContent = 'Я получил файл! Попробуйте отправить изображение, PDF или аудио.';
+      }
+    } else {
+      responseContent = 'Я понял ваше сообщение. В данный момент я в режиме разработки, но скоро смогу полноценно отвечать на вопросы и анализировать файлы!';
+    }
+
+    const assistantMessage = {
+      type: 'assistant',
+      content: responseContent,
+      timestamp: new Date().toISOString()
+    };
+
+    chatMessages.push(assistantMessage);
+    displayMessage(assistantMessage);
+    saveChatHistory();
+  }, 1000);
+}
+
+// Display message in chat
+function displayMessage(message) {
+  const chatMessagesContainer = document.getElementById('chat-messages');
+
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `chat-message ${message.type}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = 'chat-message-avatar';
+  avatar.textContent = message.type === 'user' ? '👤' : '🤖';
+
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'chat-message-content';
+
+  let contentHtml = escapeHtml(message.content);
+
+  if (message.file) {
+    contentHtml = `<div style="margin-bottom: 4px;"><strong>📎 ${escapeHtml(message.file.name)}</strong></div>` + contentHtml;
+  }
+
+  contentDiv.innerHTML = contentHtml;
+
+  const timestampDiv = document.createElement('div');
+  timestampDiv.className = 'chat-message-timestamp';
+  const timestamp = new Date(message.timestamp);
+  timestampDiv.textContent = `${timestamp.getHours().toString().padStart(2, '0')}:${timestamp.getMinutes().toString().padStart(2, '0')}`;
+
+  messageDiv.appendChild(avatar);
+  const contentWrapper = document.createElement('div');
+  contentWrapper.appendChild(contentDiv);
+  contentWrapper.appendChild(timestampDiv);
+  messageDiv.appendChild(contentWrapper);
+
+  chatMessagesContainer.appendChild(messageDiv);
+
+  // Scroll to bottom
+  chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+}
+
+// Handle file selection
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Validate file type
+  const validTypes = ['image/', 'application/pdf', 'audio/'];
+  const isValidType = validTypes.some(type => file.type.startsWith(type));
+
+  if (!isValidType) {
+    showNotification('Пожалуйста, выберите изображение, PDF или аудио файл', 'error');
+    return;
+  }
+
+  // Validate file size (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    showNotification('Файл слишком большой. Максимум 10MB', 'error');
+    return;
+  }
+
+  selectedFile = file;
+
+  // Show file info
+  const chatInputContainer = document.querySelector('.chat-input-container');
+  const existingFileInfo = document.querySelector('.chat-file-info');
+  if (existingFileInfo) {
+    existingFileInfo.remove();
+  }
+
+  const fileInfo = document.createElement('div');
+  fileInfo.className = 'chat-file-info';
+  fileInfo.innerHTML = `
+    <span>📎 ${file.name}</span>
+    <button class="remove-file" onclick="removeSelectedFile()">×</button>
+  `;
+
+  chatInputContainer.insertBefore(fileInfo, chatInputContainer.firstChild);
+}
+
+// Remove selected file
+function removeSelectedFile() {
+  selectedFile = null;
+  const fileInfo = document.querySelector('.chat-file-info');
+  if (fileInfo) {
+    fileInfo.remove();
+  }
+  const chatFileInput = document.getElementById('chat-file-input');
+  if (chatFileInput) {
+    chatFileInput.value = '';
+  }
+}
+
+// Show loading indicator
+function showLoadingIndicator() {
+  const chatMessagesContainer = document.getElementById('chat-messages');
+
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'chat-message assistant';
+  loadingDiv.id = 'chat-loading';
+
+  loadingDiv.innerHTML = `
+    <div class="chat-message-avatar">🤖</div>
+    <div class="chat-loading">
+      <div class="chat-loading-dot"></div>
+      <div class="chat-loading-dot"></div>
+      <div class="chat-loading-dot"></div>
+    </div>
+  `;
+
+  chatMessagesContainer.appendChild(loadingDiv);
+  chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+}
+
+// Hide loading indicator
+function hideLoadingIndicator() {
+  const loadingDiv = document.getElementById('chat-loading');
+  if (loadingDiv) {
+    loadingDiv.remove();
+  }
+}
+
+// Clear chat
+function clearChat() {
+  chatMessages = [];
+  localStorage.removeItem('chat-history');
+
+  const chatMessagesContainer = document.getElementById('chat-messages');
+  chatMessagesContainer.innerHTML = `
+    <div class="chat-welcome">
+      <p>👋 Привет! Я AI помощник.</p>
+      <p>Могу помочь с:</p>
+      <ul>
+        <li>📄 Анализ документов</li>
+        <li>📷 Распознавание текста с фото</li>
+        <li>🎤 Транскрибация аудио</li>
+        <li>💡 Ответы на вопросы</li>
+      </ul>
+    </div>
+  `;
+}
+
+// Save chat history to localStorage
+function saveChatHistory() {
+  localStorage.setItem('chat-history', JSON.stringify(chatMessages));
+}
+
+// Load chat history from localStorage
+function loadChatHistory() {
+  const saved = localStorage.getItem('chat-history');
+  if (saved) {
+    try {
+      chatMessages = JSON.parse(saved);
+
+      if (chatMessages.length > 0) {
+        // Hide welcome message
+        const chatWelcome = document.querySelector('.chat-welcome');
+        if (chatWelcome) {
+          chatWelcome.style.display = 'none';
+        }
+
+        // Display all messages
+        chatMessages.forEach(message => displayMessage(message));
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+      chatMessages = [];
+    }
+  }
+}
+
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 
 document.addEventListener("DOMContentLoaded", async function() {
@@ -2091,6 +2371,9 @@ document.addEventListener("DOMContentLoaded", async function() {
 
   // Восстанавливаем состояние свернутых задач
   restoreTasksCollapsedState();
+
+  // Инициализация чата
+  initializeChat();
 
   const savedToken = localStorage.getItem('auth-token');
   const savedUser = localStorage.getItem('current-user');
