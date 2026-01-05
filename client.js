@@ -2067,6 +2067,7 @@ function updateTodayProgress() {
 // Chat state
 let chatMessages = [];
 let selectedFile = null;
+let chatConversationId = ''; // Store Dify conversation ID
 
 // Initialize chat
 function initializeChat() {
@@ -2159,7 +2160,9 @@ async function sendChatMessage() {
           message: message,
           fileData: base64Data,
           mimeType: fileToSend.type,
-          fileName: fileToSend.name
+          fileName: fileToSend.name,
+          conversationId: chatConversationId,
+          userId: currentUser?.username || 'guest'
         })
       });
 
@@ -2170,7 +2173,8 @@ async function sendChatMessage() {
         method: 'POST',
         body: JSON.stringify({
           message: message,
-          history: chatMessages
+          conversationId: chatConversationId,
+          userId: currentUser?.username || 'guest'
         })
       });
 
@@ -2178,6 +2182,11 @@ async function sendChatMessage() {
     }
 
     hideLoadingIndicator();
+
+    // Update conversation ID from response
+    if (responseData.conversationId) {
+      chatConversationId = responseData.conversationId;
+    }
 
     const assistantMessage = {
       type: 'assistant',
@@ -2344,6 +2353,7 @@ function hideLoadingIndicator() {
 // Clear chat
 function clearChat() {
   chatMessages = [];
+  chatConversationId = ''; // Reset conversation ID
   localStorage.removeItem('chat-history');
 
   const chatMessagesContainer = document.getElementById('chat-messages');

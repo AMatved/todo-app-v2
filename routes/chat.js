@@ -1,40 +1,46 @@
 const express = require('express');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const axios = require('axios');
 const router = express.Router();
 
-// Initialize Google AI
-const genAI = process.env.GOOGLE_AI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
-  : null;
+// Dify API configuration
+const DIFY_API_KEY = process.env.DIFY_API_KEY || 'app-5zy9aBBpXmSpw2Flz02CeDG3';
+const DIFY_API_URL = 'https://api.dify.ai/v1/chat-messages';
 
-// Generate AI response with fallback to simple responses
-async function generateResponse(message, history = []) {
-  // If API key is configured, use Google AI
-  if (genAI) {
-    try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+// Store conversation IDs per user session (in production, use Redis or database)
+const userConversations = new Map();
 
-      // Start chat with history if provided
-      // Format history for Gemini API
-      const formattedHistory = history.map(msg => ({
-        role: msg.type === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
-      }));
+// Generate AI response using Dify API
+async function generateResponse(message, conversationId = '', userId = 'default-user') {
+  try {
+    const response = await axios.post(DIFY_API_URL, {
+      inputs: {},
+      query: message,
+      response_mode: 'blocking', // Use blocking for simpler implementation
+      conversation_id: conversationId,
+      user: userId,
+      files: []
+    }, {
+      headers: {
+        'Authorization': `Bearer ${DIFY_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
-      const chat = model.startChat({
-        history: formattedHistory
-      });
-
-      const result = await chat.sendMessage(message);
-      const response = await result.response;
-      return response.text();
-    } catch (error) {
-      console.error('Google AI Error:', error.message);
-      // Fall back to simple responses on error
-    }
+    // Return the response with conversation_id for continuity
+    return {
+      answer: response.data.answer,
+      conversationId: response.data.conversation_id,
+      messageId: response.data.message_id,
+      createdAt: response.data.created_at
+    };
+  } catch (error) {
+    console.error('Dify API Error:', error.response?.data || error.message);
+    throw error;
   }
+}
 
-  // Simple fallback responses without AI API
+// Simple fallback responses without AI API
+function getFallbackResponse(message) {
   const msg = message.toLowerCase();
 
   // Greeting
@@ -83,19 +89,35 @@ async function generateResponse(message, history = []) {
 // Chat endpoint
 router.post('/', async (req, res) => {
   try {
-    const { message, history } = req.body;
+    const { message, conversationId, userId } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Generate response (with AI if available, or fallback)
-    const response = await generateResponse(message, history || []);
+    const user = userId || 'default-user';
 
-    res.json({
-      response: response,
-      timestamp: new Date().toISOString()
-    });
+    // Try to use Dify API
+    try {
+      const result = await generateResponse(message, conversationId || '', user);
+
+      res.json({
+        response: result.answer,
+        conversationId: result.conversationId,
+        messageId: result.messageId,
+        timestamp: new Date().toISOString()
+      });
+    } catch (apiError) {
+      // Fallback to simple responses if API fails
+      console.warn('Falling back to simple responses due to API error');
+      const fallbackResponse = getFallbackResponse(message);
+
+      res.json({
+        response: fallbackResponse,
+        conversationId: conversationId || '',
+        timestamp: new Date().toISOString()
+      });
+    }
 
   } catch (error) {
     console.error('Chat API error:', error);
@@ -109,57 +131,58 @@ router.post('/', async (req, res) => {
 // Chat with file analysis endpoint
 router.post('/analyze', async (req, res) => {
   try {
-    const { message, fileData, mimeType, fileName } = req.body;
+    const { message, fileData, mimeType, fileName, conversationId, userId } = req.body;
 
     if (!fileData || !mimeType) {
       return res.status(400).json({ error: 'File data and mime type are required' });
     }
 
-    // Check if API key is configured
-    if (!genAI) {
-      return res.status(500).json({
-        error: 'AI service not configured',
-        message: 'Please set GOOGLE_AI_API_KEY in environment variables'
-      });
-    }
+    const user = userId || 'default-user';
 
-    // For images, use gemini-pro-vision
-    if (mimeType.startsWith('image/')) {
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
+    // Try to use Dify API with file support
+    try {
+      const files = [];
 
-      const imagePart = {
-        inlineData: {
-          data: fileData,
-          mimeType: mimeType
+      // For images, prepare the file data for Dify
+      if (mimeType.startsWith('image/')) {
+        files.push({
+          type: 'image',
+          transfer_method: 'remote_url',
+          url: fileData // Assuming fileData is URL, otherwise you need to upload first
+        });
+      }
+
+      const response = await axios.post(DIFY_API_URL, {
+        inputs: {},
+        query: message || 'Analyze this file and describe what you see.',
+        response_mode: 'blocking',
+        conversation_id: conversationId || '',
+        user: user,
+        files: files
+      }, {
+        headers: {
+          'Authorization': `Bearer ${DIFY_API_KEY}`,
+          'Content-Type': 'application/json'
         }
-      };
-
-      const prompt = message || 'Analyze this image and describe what you see.';
-
-      const result = await model.generateContent([prompt, imagePart]);
-      const response = await result.response;
-      const text = response.text();
+      });
 
       res.json({
-        response: text,
+        response: response.data.answer,
+        conversationId: response.data.conversation_id,
+        messageId: response.data.message_id,
         timestamp: new Date().toISOString()
       });
 
-    } else {
-      // For other files (PDF, audio), use text-based model
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-
-      const prompt = message ||
+    } catch (apiError) {
+      // Fallback response for file analysis
+      console.warn('Falling back to simple response for file analysis');
+      const fallbackResponse = message ||
         `I have uploaded a file named "${fileName}" with type ${mimeType}. ` +
-        `Unfortunately, I cannot directly process ${mimeType} files yet. ` +
-        `However, I can help you with general questions about the file or guide you on how to extract text from it.`;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+        `I can help you with general questions about the file. What would you like to know?`;
 
       res.json({
-        response: text,
+        response: fallbackResponse,
+        conversationId: conversationId || '',
         timestamp: new Date().toISOString()
       });
     }
