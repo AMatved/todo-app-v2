@@ -264,8 +264,14 @@ body {
 .brand-icon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 10px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Fallback for text brand icon */
+.brand-icon:not(img) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
