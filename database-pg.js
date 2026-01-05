@@ -147,7 +147,7 @@ const updateLastLogin = async (userId) => {
 
 const getUserTasks = async (userId) => {
   const result = await pool.query(
-    `SELECT id, text, completed, category, created_at, updated_at
+    `SELECT id, text, completed, category, created_at, updated_at, due_date
      FROM tasks WHERE user_id = $1 ORDER BY created_at DESC`,
     [userId]
   );
