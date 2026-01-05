@@ -117,7 +117,9 @@ const translations = {
                       'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
       return `${months[month]} ${year}`;
     },
-    selectedDate: 'Выбрана дата'
+    selectedDate: 'Выбрана дата',
+    filterCleared: 'Фильтр снят',
+    filteringFor: 'Задачи на'
   },
   en: {
     greeting: 'Hello,',
@@ -232,7 +234,9 @@ const translations = {
                       'July', 'August', 'September', 'October', 'November', 'December'];
       return `${months[month]} ${year}`;
     },
-    selectedDate: 'Selected date'
+    selectedDate: 'Selected date',
+    filterCleared: 'Filter cleared',
+    filteringFor: 'Tasks for'
   }
 };
 
@@ -466,6 +470,7 @@ let currentFilter = localStorage.getItem('task-filter') || 'all'; // all, active
 let sortDirection = localStorage.getItem('sort-direction') || 'desc'; // asc, desc
 let selectedTaskCategory = null; // Category selected for new task creation
 let allTasks = []; // Храним все задачи для фильтрации
+let selectedDateFilter = null; // Date filter from calendar (YYYY-MM-DD format) for filtering tasks
 
 // ==================== API ФУНКЦИИ ====================
 
@@ -652,6 +657,25 @@ async function loadTasks() {
 
 function applyFiltersAndSort() {
   let filtered = [...allTasks];
+
+  // Применяем фильтр по дате из календаря
+  if (selectedDateFilter) {
+    filtered = filtered.filter(task => {
+      if (task.due_date) {
+        // Handle different date formats from PostgreSQL
+        let taskDateStr;
+        if (typeof task.due_date === 'string') {
+          taskDateStr = task.due_date.includes('T') ? task.due_date.split('T')[0] : task.due_date;
+        } else if (task.due_date instanceof Date) {
+          taskDateStr = task.due_date.toISOString().split('T')[0];
+        } else {
+          return false;
+        }
+        return taskDateStr === selectedDateFilter;
+      }
+      return false;
+    });
+  }
 
   // Применяем фильтр по статусу
   if (currentFilter === 'active') {
@@ -1479,9 +1503,17 @@ function renderCalendar() {
   const calendarDays = document.getElementById('calendar-days');
   const monthYearElement = document.getElementById('calendar-month-year');
 
-  // Update month/year title
+  // Update month/year title with filter indicator
   const monthYearText = t('calMonthYear')(currentCalendarMonth, currentCalendarYear);
-  monthYearElement.textContent = monthYearText;
+  if (selectedDateFilter) {
+    const filterDate = new Date(selectedDateFilter + 'T00:00:00'); // Add T00:00:00 to prevent UTC conversion
+    const filterDay = filterDate.getDate();
+    const filterMonth = filterDate.getMonth() + 1;
+    const filterYear = filterDate.getFullYear();
+    monthYearElement.textContent = `${monthYearText} • ${t('filteringFor')} ${filterDay}.${filterMonth}.${filterYear}`;
+  } else {
+    monthYearElement.textContent = monthYearText;
+  }
 
   // Clear previous days
   calendarDays.innerHTML = '';
@@ -1581,25 +1613,33 @@ function createDayElement(day, isOtherMonth, isToday, tasksForDay) {
     // Ignore click if it's other month
     if (isOtherMonth) return;
 
-    // Update selected date for visual highlight
-    selectedDate = new Date(currentCalendarYear, currentCalendarMonth, day);
-
-    // Format date as YYYY-MM-DD for input
+    // Format date as YYYY-MM-DD
     const formattedDate = `${currentCalendarYear}-${String(currentCalendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-    // Update date input (for task creation)
-    const dueDateInput = document.getElementById('due-date-input');
-    if (dueDateInput) {
-      dueDateInput.value = formattedDate;
-      dueDateInput.classList.add('has-value');
-      dueDateInput.focus();
+    // Toggle date filter: if same date clicked, clear filter; otherwise set new filter
+    if (selectedDateFilter === formattedDate) {
+      // Second click - clear filter
+      selectedDateFilter = null;
+      showNotification(t('filterCleared') || 'Фильтр снят', 'success');
+    } else {
+      // First click - set filter and update date input
+      selectedDateFilter = formattedDate;
 
-      // Visual feedback
-      showNotification(`${t('selectedDate') || 'Выбрана дата'}: ${day}.${currentCalendarMonth + 1}.${currentCalendarYear}`, 'success');
+      // Update selected date for visual highlight
+      selectedDate = new Date(currentCalendarYear, currentCalendarMonth, day);
+
+      // Update date input (for task creation)
+      const dueDateInput = document.getElementById('due-date-input');
+      if (dueDateInput) {
+        dueDateInput.value = formattedDate;
+        dueDateInput.classList.add('has-value');
+      }
+
+      showNotification(`${t('filteringFor') || 'Задачи на'} ${day}.${currentCalendarMonth + 1}.${currentCalendarYear}`, 'success');
     }
 
-    // Re-render calendar to show selection
-    renderCalendar();
+    // Apply filter and re-render calendar
+    applyFiltersAndSort();
   });
 
   return dayElement;
