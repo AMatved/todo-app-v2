@@ -104,6 +104,32 @@ async function initializeDatabase() {
       }
     }
 
+    // Migration: add postponed_count column if it doesn't exist
+    try {
+      await client.query(`
+        ALTER TABLE tasks
+        ADD COLUMN IF NOT EXISTS postponed_count INTEGER DEFAULT 0
+      `);
+      console.log('✅ Postponed count column added to tasks table');
+    } catch (err) {
+      if (!err.message.includes('already exists')) {
+        console.error('Error adding postponed_count column:', err.message);
+      }
+    }
+
+    // Migration: add original_due_date column if it doesn't exist
+    try {
+      await client.query(`
+        ALTER TABLE tasks
+        ADD COLUMN IF NOT EXISTS original_due_date DATE DEFAULT NULL
+      `);
+      console.log('✅ Original due date column added to tasks table');
+    } catch (err) {
+      if (!err.message.includes('already exists')) {
+        console.error('Error adding original_due_date column:', err.message);
+      }
+    }
+
     // Create deleted_tasks table (trash)
     await client.query(`
       CREATE TABLE IF NOT EXISTS deleted_tasks (
@@ -175,7 +201,7 @@ const updateLastLogin = async (userId) => {
 
 const getUserTasks = async (userId) => {
   const result = await pool.query(
-    `SELECT id, text, completed, category, created_at, updated_at, due_date, due_time, comment
+    `SELECT id, text, completed, category, created_at, updated_at, due_date, due_time, comment, postponed_count, original_due_date
      FROM tasks WHERE user_id = $1 ORDER BY created_at DESC`,
     [userId]
   );
@@ -195,6 +221,12 @@ const updateTask = async (taskId, userId, updates) => {
 
   console.log('database-pg.js updateTask called with:', { taskId, userId, text, completed, category, dueDate, dueTime, comment });
 
+  // Get current task to check if date is being postponed
+  const currentTask = await pool.query(
+    'SELECT due_date, original_due_date, postponed_count FROM tasks WHERE id = $1 AND user_id = $2',
+    [taskId, userId]
+  );
+
   const fields = [];
   const values = [];
   let paramCount = 1;
@@ -211,10 +243,32 @@ const updateTask = async (taskId, userId, updates) => {
     fields.push(`category = $${paramCount++}`);
     values.push(category);
   }
-  if (dueDate !== undefined) {
+
+  // Handle date postponing
+  if (dueDate !== undefined && currentTask.rows.length > 0) {
+    const oldDate = currentTask.rows[0].due_date;
+    const originalDate = currentTask.rows[0].original_due_date || oldDate;
+    const postponedCount = currentTask.rows[0].postponed_count || 0;
+
+    // Check if date is being changed to a later date
+    if (oldDate && dueDate !== oldDate) {
+      const oldDateObj = new Date(oldDate);
+      const newDateObj = new Date(dueDate);
+
+      if (newDateObj > oldDateObj) {
+        // Task is being postponed
+        fields.push(`original_due_date = $${paramCount++}`);
+        values.push(originalDate);
+
+        fields.push(`postponed_count = $${paramCount++}`);
+        values.push(postponedCount + 1);
+      }
+    }
+
     fields.push(`due_date = $${paramCount++}`);
     values.push(dueDate);
   }
+
   if (dueTime !== undefined) {
     fields.push(`due_time = $${paramCount++}`);
     values.push(dueTime);

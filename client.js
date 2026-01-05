@@ -839,6 +839,35 @@ function restoreTasksCollapsedState() {
   }
 }
 
+// Calculate urgency color based on time remaining
+function getUrgencyColor(task) {
+  if (!task.due_date || task.completed) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dueDate = new Date(task.due_date);
+  dueDate.setHours(0, 0, 0, 0);
+
+  const timeDiff = dueDate - today;
+  const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+  // Color scale based on days remaining
+  if (daysDiff < 0) {
+    return { color: '#ef4444', intensity: 1, label: 'Просрочено' }; // Red - overdue
+  } else if (daysDiff === 0) {
+    return { color: '#f97316', intensity: 0.9, label: 'Сегодня' }; // Orange - today
+  } else if (daysDiff === 1) {
+    return { color: '#eab308', intensity: 0.7, label: 'Завтра' }; // Yellow - tomorrow
+  } else if (daysDiff <= 3) {
+    return { color: '#84cc16', intensity: 0.5, label: 'Через 2-3 дня' }; // Lime
+  } else if (daysDiff <= 7) {
+    return { color: '#22c55e', intensity: 0.3, label: 'На этой неделе' }; // Green
+  } else {
+    return { color: '#10b981', intensity: 0.2, label: 'Есть время' }; // Light green
+  }
+}
+
 function displayTasks(tasks) {
   listContainer.innerHTML = "";
 
@@ -862,6 +891,20 @@ function displayTasks(tasks) {
       li.className = "task-item" + (taskData.completed ? " completed" : "");
       li.dataset.taskId = taskData.id;
 
+      // Calculate urgency color
+      const urgency = getUrgencyColor(taskData);
+      if (urgency) {
+        li.style.borderLeft = `4px solid ${urgency.color}`;
+        li.style.backgroundColor = `${urgency.color}${Math.round(urgency.intensity * 20).toString(16).padStart(2, '0')}`;
+      }
+
+      // Check if task is postponed
+      const isPostponed = taskData.postponed_count > 0;
+      if (isPostponed) {
+        li.classList.add('postponed');
+        li.setAttribute('data-postponed-count', taskData.postponed_count);
+      }
+
       // Add data attribute for color coding if task has time
       if (taskData.due_time) {
         li.setAttribute('data-has-time', 'true');
@@ -879,6 +922,9 @@ function displayTasks(tasks) {
       }
 
       const categoryIcon = taskData.category ? categoryIcons[taskData.category] : '';
+
+      // Add warning icon for postponed tasks
+      const postponedIcon = isPostponed ? `<span class="postponed-icon" title="Перенесено ${taskData.postponed_count} раз(а)">!</span>` : '';
 
       // Comment icon with tooltip
       const commentDisplay = taskData.comment ? `
@@ -903,7 +949,7 @@ function displayTasks(tasks) {
         </label>
         ${categoryIcon ? `<span class="task-category-icon">${categoryIcon}</span>` : ''}
         <div class="task-wrapper">
-          <span class="task-content">${escapeHtml(taskData.text)}</span>
+          <span class="task-content">${postponedIcon}${escapeHtml(taskData.text)}</span>
           ${timestamp ? `<span class="task-timestamp" data-timestamp="${dateToShow}">${timestamp}</span>` : ''}
         </div>
         <div class="task-actions">
