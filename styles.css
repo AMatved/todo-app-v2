@@ -1870,6 +1870,237 @@ body {
   text-align: center;
 }
 
+/* ==================== THEME TABS ==================== */
+
+.theme-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.theme-tab {
+  padding: 10px 20px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-tab:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.theme-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ==================== LAYOUT BUILDER ==================== */
+
+.layout-section {
+  padding: 4px;
+}
+
+.layout-description {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.layout-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 2px dashed var(--border);
+}
+
+.layout-component {
+  background: var(--bg-primary);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  cursor: grab;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.layout-component:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px var(--shadow);
+  transform: translateY(-2px);
+}
+
+.layout-component:active {
+  cursor: grabbing;
+}
+
+.layout-component.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.component-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.component-icon {
+  font-size: 20px;
+}
+
+.component-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.drag-handle {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+/* Layout Preview */
+.layout-preview {
+  margin-bottom: 24px;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.preview-canvas {
+  min-height: 300px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  position: relative;
+}
+
+.preview-canvas.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.preview-item {
+  background: var(--bg-primary);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.preview-item::before {
+  content: attr(data-label);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.preview-item::after {
+  content: '×';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.preview-item::after:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.preview-item[data-component="tasks"]::before {
+  content: '📋 Задачи';
+}
+
+.preview-item[data-component="calendar"]::before {
+  content: '📅 Календарь';
+}
+
+.preview-item[data-component="chat"]::before {
+  content: '🤖 AI Помощник';
+}
+
+/* Layout Actions */
+.layout-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn-small {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-tertiary);
+}
+
 /* Theme-specific CSS variables for body background */
 
 /* Spring Theme */

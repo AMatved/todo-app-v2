@@ -2364,6 +2364,201 @@ document.addEventListener("DOMContentLoaded", async function() {
     applyTheme(savedTheme);
   }
 
+  // ==================== LAYOUT BUILDER ====================
+
+  // Tab switching
+  const themeTabs = document.querySelectorAll('.theme-tab');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  themeTabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+      const targetTab = this.dataset.tab;
+
+      // Remove active class from all tabs and contents
+      themeTabs.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+
+      // Add active class to clicked tab and corresponding content
+      this.classList.add('active');
+      document.getElementById(`${targetTab}-tab`).classList.add('active');
+    });
+  });
+
+  // Drag and Drop functionality
+  const layoutComponents = document.querySelectorAll('.layout-component');
+  const previewCanvas = document.getElementById('preview-canvas');
+  let currentLayout = [];
+
+  // Load saved layout
+  function loadSavedLayout() {
+    const savedLayout = localStorage.getItem('customLayout');
+    if (savedLayout) {
+      try {
+        currentLayout = JSON.parse(savedLayout);
+        currentLayout.forEach(component => {
+          addPreviewItem(component);
+        });
+      } catch (e) {
+        console.error('Error loading layout:', e);
+        currentLayout = [];
+      }
+    }
+  }
+
+  // Save layout to localStorage
+  function saveLayout() {
+    localStorage.setItem('customLayout', JSON.stringify(currentLayout));
+  }
+
+  // Add item to preview
+  function addPreviewItem(component) {
+    // Check if already exists
+    if (currentLayout.includes(component)) return;
+
+    currentLayout.push(component);
+
+    const previewItem = document.createElement('div');
+    previewItem.className = 'preview-item';
+    previewItem.dataset.component = component;
+    previewItem.dataset.label = component;
+
+    // Remove on click
+    previewItem.addEventListener('click', function() {
+      const comp = this.dataset.component;
+      currentLayout = currentLayout.filter(c => c !== comp);
+      this.remove();
+      saveLayout();
+    });
+
+    previewCanvas.appendChild(previewItem);
+    saveLayout();
+  }
+
+  // Drag events for components
+  layoutComponents.forEach(component => {
+    component.addEventListener('dragstart', function(e) {
+      this.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', this.dataset.component);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    component.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+    });
+  });
+
+  // Drop zone events
+  previewCanvas.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    this.classList.add('drag-over');
+  });
+
+  previewCanvas.addEventListener('dragleave', function() {
+    this.classList.remove('drag-over');
+  });
+
+  previewCanvas.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    const component = e.dataTransfer.getData('text/plain');
+    if (component) {
+      addPreviewItem(component);
+    }
+  });
+
+  // Reset layout button
+  const resetLayoutBtn = document.getElementById('reset-layout');
+  if (resetLayoutBtn) {
+    resetLayoutBtn.addEventListener('click', function() {
+      currentLayout = [];
+      previewCanvas.innerHTML = '';
+      localStorage.removeItem('customLayout');
+    });
+  }
+
+  // Apply layout button
+  const applyLayoutBtn = document.getElementById('apply-layout');
+  if (applyLayoutBtn) {
+    applyLayoutBtn.addEventListener('click', function() {
+      if (currentLayout.length === 0) {
+        alert('Пожалуйста, добавьте хотя бы один компонент в макет');
+        return;
+      }
+
+      // Apply custom layout
+      applyCustomLayout(currentLayout);
+
+      // Close modal
+      closeThemeModal();
+
+      // Show success message
+      showNotification('Макет успешно применен!');
+    });
+  }
+
+  // Apply custom layout to page
+  function applyCustomLayout(layout) {
+    const contentWrapper = document.querySelector('.content-wrapper');
+    const calendarChatWrapper = document.querySelector('.calendar-chat-wrapper');
+    const calendarContainer = document.querySelector('.calendar-container');
+    const chatContainer = document.querySelector('.chat-container');
+    const mainContent = document.querySelector('.main-content');
+
+    if (!contentWrapper || !calendarChatWrapper) return;
+
+    // Reset to default structure first
+    const existingCalendarChatWrapper = document.querySelector('.calendar-chat-wrapper');
+    if (existingCalendarChatWrapper) {
+      existingCalendarChatWrapper.remove();
+    }
+
+    // Create new layout based on user selection
+    if (layout.includes('tasks')) {
+      // Tasks are always in content-wrapper
+    }
+
+    if (layout.includes('calendar') && layout.includes('chat')) {
+      // Both calendar and chat side by side
+      calendarChatWrapper = document.createElement('div');
+      calendarChatWrapper.className = 'calendar-chat-wrapper';
+
+      if (calendarContainer) {
+        contentWrapper.after(calendarChatWrapper);
+        calendarChatWrapper.appendChild(calendarContainer);
+      }
+      if (chatContainer) {
+        calendarChatWrapper.appendChild(chatContainer);
+      }
+    } else if (layout.includes('calendar')) {
+      // Only calendar
+      if (calendarContainer) {
+        contentWrapper.after(calendarContainer);
+      }
+      if (chatContainer) {
+        chatContainer.style.display = 'none';
+      }
+    } else if (layout.includes('chat')) {
+      // Only chat
+      if (chatContainer) {
+        contentWrapper.after(chatContainer);
+      }
+      if (calendarContainer) {
+        calendarContainer.style.display = 'none';
+      }
+    }
+  }
+
+  // Load and apply saved layout on page load
+  loadSavedLayout();
+  if (currentLayout.length > 0) {
+    // Apply saved layout after DOM is fully loaded
+    setTimeout(() => {
+      applyCustomLayout(currentLayout);
+    }, 100);
+  }
+
   // Добавляем listeners для календаря
   const calendarPrev = document.getElementById('calendar-prev');
   if (calendarPrev) {

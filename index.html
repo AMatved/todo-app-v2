@@ -399,10 +399,17 @@
     <div class="modal-overlay"></div>
     <div class="modal-content theme-modal-content">
       <div class="theme-header">
-        <h3 class="theme-modal-title">Choose Theme</h3>
+        <!-- Tab Navigation -->
+        <div class="theme-tabs">
+          <button class="theme-tab active" data-tab="themes">🎨 Цвета</button>
+          <button class="theme-tab" data-tab="layout">📐 Макет</button>
+        </div>
         <button id="theme-close" class="btn-close-modal">×</button>
       </div>
-      <div class="themes-grid">
+
+      <!-- Themes Tab Content -->
+      <div class="tab-content active" id="themes-tab">
+        <div class="themes-grid">
         <div class="theme-card" data-theme="spring">
           <div class="theme-preview spring-preview">
             <div class="theme-color-dot spring-color-1"></div>
@@ -442,6 +449,77 @@
             <div class="theme-color-dot sakura-color-3"></div>
           </div>
           <span class="theme-name theme-name-sakura">Sakura</span>
+        </div>
+        </div>
+      </div>
+
+      <!-- Layout Tab Content -->
+      <div class="tab-content" id="layout-tab">
+        <div class="layout-section">
+          <p class="layout-description">Перетащите блоки чтобы настроить макет экрана</p>
+
+          <div class="layout-builder" id="layout-builder">
+            <!-- Draggable Components -->
+            <div class="layout-component" data-component="tasks" draggable="true">
+              <div class="component-header">
+                <span class="component-icon">📋</span>
+                <span class="component-name">Задачи</span>
+                <svg class="drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="9" cy="12" r="1"></circle>
+                  <circle cx="9" cy="5" r="1"></circle>
+                  <circle cx="9" cy="19" r="1"></circle>
+                  <circle cx="15" cy="12" r="1"></circle>
+                  <circle cx="15" cy="5" r="1"></circle>
+                  <circle cx="15" cy="19" r="1"></circle>
+                </svg>
+              </div>
+            </div>
+
+            <div class="layout-component" data-component="calendar" draggable="true">
+              <div class="component-header">
+                <span class="component-icon">📅</span>
+                <span class="component-name">Календарь</span>
+                <svg class="drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="9" cy="12" r="1"></circle>
+                  <circle cx="9" cy="5" r="1"></circle>
+                  <circle cx="9" cy="19" r="1"></circle>
+                  <circle cx="15" cy="12" r="1"></circle>
+                  <circle cx="15" cy="5" r="1"></circle>
+                  <circle cx="15" cy="19" r="1"></circle>
+                </svg>
+              </div>
+            </div>
+
+            <div class="layout-component" data-component="chat" draggable="true">
+              <div class="component-header">
+                <span class="component-icon">🤖</span>
+                <span class="component-name">AI Помощник</span>
+                <svg class="drag-handle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="9" cy="12" r="1"></circle>
+                  <circle cx="9" cy="5" r="1"></circle>
+                  <circle cx="9" cy="19" r="1"></circle>
+                  <circle cx="15" cy="12" r="1"></circle>
+                  <circle cx="15" cy="5" r="1"></circle>
+                  <circle cx="15" cy="19" r="1"></circle>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Layout Preview Area -->
+          <div class="layout-preview">
+            <div class="preview-header">
+              <span>Предпросмотр макета</span>
+              <button id="reset-layout" class="btn-small btn-secondary">Сбросить</button>
+            </div>
+            <div class="preview-canvas" id="preview-canvas">
+              <!-- Dropped items will appear here -->
+            </div>
+          </div>
+
+          <div class="layout-actions">
+            <button id="apply-layout" class="btn btn-primary">Применить макет</button>
+          </div>
         </div>
       </div>
     </div>
