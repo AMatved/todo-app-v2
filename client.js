@@ -862,9 +862,22 @@ function displayTasks(tasks) {
       li.className = "task-item" + (taskData.completed ? " completed" : "");
       li.dataset.taskId = taskData.id;
 
-      // Show due_date if available, otherwise show created_at
+      // Add data attribute for color coding if task has time
+      if (taskData.due_time) {
+        li.setAttribute('data-has-time', 'true');
+      }
+
+      // Show due_date and due_time if available
       const dateToShow = taskData.due_date || taskData.created_at;
-      const timestamp = dateToShow ? formatTimestamp(dateToShow) : '';
+      let timestamp = '';
+      if (taskData.due_time) {
+        // Show both date and time
+        const datePart = formatTimestamp(dateToShow);
+        timestamp = `${datePart.split(' ')[0]} • ${taskData.due_time}`;
+      } else {
+        timestamp = dateToShow ? formatTimestamp(dateToShow) : '';
+      }
+
       const categoryIcon = taskData.category ? categoryIcons[taskData.category] : '';
 
       li.innerHTML = `
@@ -888,6 +901,7 @@ function displayTasks(tasks) {
     });
   }
   updateCounters();
+  updateTodayProgress();
 }
 
 async function saveTask(text, dueDate) {
@@ -896,9 +910,13 @@ async function saveTask(text, dueDate) {
     addLocalTask(text);
   } else {
     try {
+      const dueTimeInput = document.getElementById('due-time-input');
+      const dueTime = dueTimeInput ? dueTimeInput.value : null;
+
       const requestBody = {
         text,
-        due_date: dueDate
+        due_date: dueDate,
+        due_time: dueTime
       };
       if (selectedTaskCategory) {
         requestBody.category = selectedTaskCategory;
@@ -1265,6 +1283,7 @@ async function addTask() {
   const task = inputBox.value.trim();
   const dueDateInput = document.getElementById('due-date-input');
   const dueDate = dueDateInput ? dueDateInput.value : null;
+  const dueTimeInput = document.getElementById('due-time-input');
 
   if (!task) {
     showNotification(t('errorTaskText'), 'error');
@@ -1279,6 +1298,11 @@ async function addTask() {
 
   inputBox.value = "";
   // Don't clear due date - user might want to add multiple tasks for same date
+  // But clear time input as it's less common to have multiple tasks at same time
+  if (dueTimeInput) {
+    dueTimeInput.value = '';
+    dueTimeInput.classList.remove('has-value');
+  }
 
   try {
     await saveTask(task, dueDate);
@@ -1663,6 +1687,52 @@ function navigateToNextMonth() {
     currentCalendarYear++;
   }
   renderCalendar();
+}
+
+// Update today's progress bar
+function updateTodayProgress() {
+  const todayProgress = document.getElementById('today-progress');
+  const todayDateElement = document.getElementById('today-date');
+  const progressFill = document.getElementById('progress-fill');
+  const progressText = document.getElementById('progress-text');
+
+  if (!todayProgress) return;
+
+  // Get today's date in YYYY-MM-DD format (local timezone)
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  // Filter tasks for today
+  const todayTasks = allTasks.filter(task => {
+    if (task.due_date) {
+      const taskDateStr = task.due_date.includes('T') ? task.due_date.split('T')[0] : task.due_date;
+      return taskDateStr === todayStr;
+    }
+    return false;
+  });
+
+  if (todayTasks.length === 0) {
+    todayProgress.style.display = 'none';
+    return;
+  }
+
+  // Show progress section
+  todayProgress.style.display = 'block';
+
+  // Update today's date display
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const year = today.getFullYear();
+  todayDateElement.textContent = `${day}.${month}.${year}`;
+
+  // Calculate progress
+  const completedCount = todayTasks.filter(task => task.completed).length;
+  const totalCount = todayTasks.length;
+  const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  // Update progress bar and text
+  progressFill.style.width = `${percentage}%`;
+  progressText.textContent = `${completedCount}/${totalCount}`;
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================

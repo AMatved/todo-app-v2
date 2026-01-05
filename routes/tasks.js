@@ -46,7 +46,7 @@ router.post('/', authenticateToken, async (req, res) => {
     console.log('POST /api/tasks - User ID:', req.user.id);
     console.log('POST /api/tasks - Request body:', req.body);
 
-    const { text, category, due_date } = req.body;
+    const { text, category, due_date, due_time } = req.body;
 
     if (!text || text.trim().length === 0) {
       console.log('POST /api/tasks - Validation failed: empty text');
@@ -64,7 +64,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     console.log('POST /api/tasks - Creating task...');
-    const task = await createTask(req.user.id, text.trim(), category || null, due_date);
+    const task = await createTask(req.user.id, text.trim(), category || null, due_date, due_time || null);
     console.log('POST /api/tasks - Task created:', task);
 
     const response = {

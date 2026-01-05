@@ -204,6 +204,14 @@
                 title="Выберите дату"
               >
             </div>
+            <div class="time-selector">
+              <input
+                type="time"
+                id="due-time-input"
+                class="time-input"
+                title="Выберите время (опционально)"
+              >
+            </div>
             <button id="input-button" class="btn btn-add">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="10" y1="3" x2="10" y2="17"></line>
@@ -215,6 +223,20 @@
         </div>
 
         <div class="tasks-container">
+          <!-- Today's Progress Section -->
+          <div class="today-progress" id="today-progress" style="display: none;">
+            <div class="today-header">
+              <h3 class="today-title">Сегодня</h3>
+              <span class="today-date" id="today-date"></span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar">
+                <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+              </div>
+              <span class="progress-text" id="progress-text">0/0</span>
+            </div>
+          </div>
+
           <!-- Collapse/Expand Toggle (Top Right) -->
           <button id="toggle-tasks-btn" class="toggle-tasks-btn-inline" title="Toggle tasks">
             <svg id="collapse-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">

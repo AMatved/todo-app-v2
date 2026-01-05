@@ -76,6 +76,20 @@ async function initializeDatabase() {
       }
     }
 
+    // Migration: add due_time column if it doesn't exist
+    try {
+      await client.query(`
+        ALTER TABLE tasks
+        ADD COLUMN IF NOT EXISTS due_time TIME DEFAULT NULL
+      `);
+      console.log('✅ Due time column added to tasks table');
+    } catch (err) {
+      // Column might already exist, ignore error
+      if (!err.message.includes('already exists')) {
+        console.error('Error adding due_time column:', err.message);
+      }
+    }
+
     // Create deleted_tasks table (trash)
     await client.query(`
       CREATE TABLE IF NOT EXISTS deleted_tasks (
@@ -147,25 +161,25 @@ const updateLastLogin = async (userId) => {
 
 const getUserTasks = async (userId) => {
   const result = await pool.query(
-    `SELECT id, text, completed, category, created_at, updated_at, due_date
+    `SELECT id, text, completed, category, created_at, updated_at, due_date, due_time
      FROM tasks WHERE user_id = $1 ORDER BY created_at DESC`,
     [userId]
   );
   return result.rows;
 };
 
-const createTask = async (userId, text, category = null, dueDate = null) => {
+const createTask = async (userId, text, category = null, dueDate = null, dueTime = null) => {
   const result = await pool.query(
-    'INSERT INTO tasks (user_id, text, category, due_date) VALUES ($1, $2, $3, $4) RETURNING *',
-    [userId, text, category, dueDate]
+    'INSERT INTO tasks (user_id, text, category, due_date, due_time) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+    [userId, text, category, dueDate, dueTime]
   );
   return result.rows[0];
 };
 
 const updateTask = async (taskId, userId, updates) => {
-  const { text, completed, category, dueDate } = updates;
+  const { text, completed, category, dueDate, dueTime } = updates;
 
-  console.log('database-pg.js updateTask called with:', { taskId, userId, text, completed, category });
+  console.log('database-pg.js updateTask called with:', { taskId, userId, text, completed, category, dueDate, dueTime });
 
   const fields = [];
   const values = [];
@@ -186,6 +200,10 @@ const updateTask = async (taskId, userId, updates) => {
   if (dueDate !== undefined) {
     fields.push(`due_date = $${paramCount++}`);
     values.push(dueDate);
+  }
+  if (dueTime !== undefined) {
+    fields.push(`due_time = $${paramCount++}`);
+    values.push(dueTime);
   }
 
   fields.push(`updated_at = CURRENT_TIMESTAMP`);
