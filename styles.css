@@ -2579,6 +2579,10 @@ body.theme-sakura .btn-primary {
   height: 476px;
   display: flex;
   flex-direction: column;
+  background: var(--bg-primary);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px var(--shadow);
+  padding: 20px;
 }
 
 .chat-container {
