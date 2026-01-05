@@ -913,6 +913,8 @@ async function saveTask(text, dueDate) {
       const dueTimeInput = document.getElementById('due-time-input');
       const dueTime = dueTimeInput ? dueTimeInput.value : null;
 
+      console.log('saveTask - dueTime:', dueTime, 'dueTimeInput.value:', dueTimeInput?.value);
+
       const requestBody = {
         text,
         due_date: dueDate,
@@ -922,10 +924,14 @@ async function saveTask(text, dueDate) {
         requestBody.category = selectedTaskCategory;
       }
 
+      console.log('saveTask - requestBody:', requestBody);
+
       const data = await apiRequest('/tasks', {
         method: 'POST',
         body: JSON.stringify(requestBody)
       });
+
+      console.log('saveTask - response:', data);
 
       // Добавляем новую задачу в allTasks и применяем фильтры
       if (data && data.task) {
