@@ -535,8 +535,11 @@ async function login(username, password) {
     currentUser = data.user;
     isGuest = false;
 
+    console.log('Login successful - Saving to localStorage');
     localStorage.setItem('auth-token', authToken);
     localStorage.setItem('current-user', JSON.stringify(currentUser));
+    console.log('Token saved:', !!localStorage.getItem('auth-token'));
+    console.log('User saved:', !!localStorage.getItem('current-user'));
 
     showApp();
     await loadTasks();
@@ -1729,11 +1732,16 @@ document.addEventListener("DOMContentLoaded", async function() {
   const savedToken = localStorage.getItem('auth-token');
   const savedUser = localStorage.getItem('current-user');
 
+  console.log('Session restore - Token exists:', !!savedToken);
+  console.log('Session restore - User exists:', !!savedUser);
+
   if (savedToken && savedUser) {
     try {
       authToken = savedToken;
       currentUser = JSON.parse(savedUser);
       isGuest = currentUser.username === "Guest" || currentUser.username === "Гость";
+
+      console.log('Session restored - User:', currentUser.username, 'isGuest:', isGuest);
 
       showApp();
 
@@ -1747,6 +1755,7 @@ document.addEventListener("DOMContentLoaded", async function() {
       logout();
     }
   } else {
+    console.log('No saved session found, showing auth');
     showAuth();
   }
 });
