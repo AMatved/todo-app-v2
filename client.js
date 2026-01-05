@@ -841,6 +841,7 @@ function restoreTasksCollapsedState() {
 
 // Calculate urgency color based on time remaining
 function getUrgencyColor(task) {
+  // Don't show urgency for completed tasks
   if (!task.due_date || task.completed) return null;
 
   // Get current date in local timezone (set to midnight)
@@ -864,11 +865,11 @@ function getUrgencyColor(task) {
   const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
   // Color scale based on days remaining
-  // Only RED for overdue and today (as requested)
+  // Only RED for overdue (not today)
   if (daysDiff < 0) {
-    return { color: '#ef4444', intensity: 1, label: 'Просрочено' }; // Red - overdue
+    return { color: '#ef4444', intensity: 1, label: 'Просрочено' }; // Red - ONLY overdue
   } else if (daysDiff === 0) {
-    return { color: '#ef4444', intensity: 0.95, label: 'Сегодня' }; // Red - today (changed from orange)
+    return null; // No special color for today's tasks
   } else if (daysDiff === 1) {
     return { color: '#22c55e', intensity: 0.3, label: 'Завтра' }; // Green - tomorrow
   } else if (daysDiff <= 7) {
