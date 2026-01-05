@@ -1471,8 +1471,18 @@ function getTasksForDate(day, month, year) {
   return allTasks.filter(task => {
     // Use due_date if it exists, otherwise fall back to created_at
     if (task.due_date) {
-      console.log(`Task "${task.text}" - due_date: ${task.due_date}, target: ${targetDateStr}, match: ${task.due_date === targetDateStr}`);
-      return task.due_date === targetDateStr;
+      // Handle different date formats from PostgreSQL
+      let taskDateStr;
+      if (typeof task.due_date === 'string') {
+        // If due_date is ISO string, extract date part
+        taskDateStr = task.due_date.includes('T') ? task.due_date.split('T')[0] : task.due_date;
+      } else if (task.due_date instanceof Date) {
+        taskDateStr = task.due_date.toISOString().split('T')[0];
+      } else {
+        return false;
+      }
+      console.log(`Task "${task.text}" - due_date: ${task.due_date}, taskDateStr: ${taskDateStr}, target: ${targetDateStr}, match: ${taskDateStr === targetDateStr}`);
+      return taskDateStr === targetDateStr;
     } else {
       const taskDate = new Date(task.created_at);
       const taskDateStr = taskDate.toISOString().split('T')[0];
