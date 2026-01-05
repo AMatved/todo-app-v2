@@ -2593,6 +2593,7 @@ body.theme-sakura .btn-primary {
   flex-direction: column;
   height: 476px;
   overflow: hidden;
+  margin-top: 20px;
 }
 
 .chat-header {
