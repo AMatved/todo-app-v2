@@ -15,11 +15,14 @@ async function generateResponse(message, history = []) {
       const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
       // Start chat with history if provided
+      // Format history for Gemini API
+      const formattedHistory = history.map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      }));
+
       const chat = model.startChat({
-        history: history.map(msg => ({
-          role: msg.type === 'user' ? 'user' : 'model',
-          parts: msg.content
-        }))
+        history: formattedHistory
       });
 
       const result = await chat.sendMessage(message);
