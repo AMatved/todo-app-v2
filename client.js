@@ -2086,9 +2086,25 @@ function initializeChat() {
   const chatInput = document.getElementById('chat-input');
   const chatFileInput = document.getElementById('chat-file-input');
   const clearChatBtn = document.getElementById('clear-chat');
+  const avatarToggleBtn = document.getElementById('avatar-toggle');
 
   if (chatSendBtn) {
     chatSendBtn.addEventListener('click', sendChatMessage);
+  }
+
+  // 🤖 Avatar toggle button
+  if (avatarToggleBtn && typeof avatarController !== 'undefined') {
+    avatarToggleBtn.addEventListener('click', () => {
+      const isVisible = avatarController.toggle();
+      const container = document.getElementById('avatar-container');
+      if (container) {
+        if (!isVisible) {
+          container.classList.add('minimized');
+        } else {
+          container.classList.remove('minimized');
+        }
+      }
+    });
   }
 
   if (chatInput) {
@@ -2158,6 +2174,11 @@ async function sendChatMessage() {
   // Show loading indicator
   showLoadingIndicator();
 
+  // 🤖 Avatar: Show "thinking" animation
+  if (typeof avatarController !== 'undefined' && avatarController.isInitialized) {
+    avatarController.setThinking();
+  }
+
   try {
     let responseData;
 
@@ -2194,6 +2215,15 @@ async function sendChatMessage() {
 
     hideLoadingIndicator();
 
+    // 🤖 Avatar: Show "happy" when response received
+    if (typeof avatarController !== 'undefined' && avatarController.isInitialized) {
+      avatarController.setHappy();
+      // Return to idle after 2 seconds
+      setTimeout(() => {
+        avatarController.setIdle();
+      }, 2000);
+    }
+
     // Update conversation ID from response
     if (responseData.conversationId) {
       chatConversationId = responseData.conversationId;
@@ -2211,6 +2241,14 @@ async function sendChatMessage() {
 
   } catch (error) {
     hideLoadingIndicator();
+
+    // 🤖 Avatar: Show "confused" on error
+    if (typeof avatarController !== 'undefined' && avatarController.isInitialized) {
+      avatarController.setConfused();
+      setTimeout(() => {
+        avatarController.setIdle();
+      }, 2000);
+    }
 
     console.error('Chat error:', error);
 

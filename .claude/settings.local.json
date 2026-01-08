@@ -10,7 +10,13 @@
       "Bash(npm start)",
       "Bash(git push:*)",
       "Bash(railway up:*)",
-      "Bash(railway logs:*)"
+      "Bash(railway logs:*)",
+      "Bash(tasklist:*)",
+      "Bash(curl:*)",
+      "Bash(dir:*)",
+      "Bash(git rm:*)",
+      "Bash(cat:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

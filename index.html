@@ -542,7 +542,22 @@
     </div>
   </div>
 
+  <!-- Avatar Assistant Container -->
+  <div id="avatar-container" class="avatar-container">
+    <canvas id="avatar-canvas"></canvas>
+    <div class="avatar-controls">
+      <button id="avatar-toggle" class="avatar-btn" title="Toggle Avatar">
+        🤖
+      </button>
+    </div>
+  </div>
+
+  <!-- Three.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
   <script src="js/icons-data.js"></script>
+  <script src="js/avatar-engine.js"></script>
+  <script src="js/avatar-controller.js"></script>
   <script src="client.js"></script>
 </body>
 </html>
