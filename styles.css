@@ -3156,3 +3156,7 @@ body.theme-sakura .btn-primary {
   opacity: 0.5;
 }
 
+/* Hide avatar completely when not logged in */
+.avatar-container.hidden {
+  display: none !important;
+}

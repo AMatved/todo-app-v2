@@ -726,11 +726,23 @@ function showApp() {
   authContainer.style.display = "none";
   appContainer.style.display = "block";
   currentUserSpan.textContent = currentUser.username;
+
+  // Show avatar when logged in
+  const avatarContainer = document.getElementById('avatar-container');
+  if (avatarContainer) {
+    avatarContainer.classList.remove('hidden');
+  }
 }
 
 function showAuth() {
   authContainer.style.display = "flex";
   appContainer.style.display = "none";
+
+  // Hide avatar when logged out
+  const avatarContainer = document.getElementById('avatar-container');
+  if (avatarContainer) {
+    avatarContainer.classList.add('hidden');
+  }
 }
 
 function showNotification(message, type = 'success') {
