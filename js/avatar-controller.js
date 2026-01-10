@@ -26,7 +26,11 @@ class AvatarController {
     const container = document.getElementById('avatar-container');
 
     if (container) {
-      container.style.display = this.isVisible ? 'block' : 'none';
+      if (this.isVisible) {
+        container.classList.remove('minimized');
+      } else {
+        container.classList.add('minimized');
+      }
     }
 
     return this.isVisible;
